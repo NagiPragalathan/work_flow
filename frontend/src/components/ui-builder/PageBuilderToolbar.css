@@ -1,7 +1,7 @@
 /* Page Builder Toolbar Styles */
 
 .page-builder-toolbar {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
   padding: 12px 24px;
@@ -10,6 +10,9 @@
   box-shadow: 0 1px 3px var(--shadow);
   z-index: 100;
   gap: 24px;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
 }
 
 /* Toolbar Sections */

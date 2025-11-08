@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
+import apiService from '../../services/api';
 import './Auth.css';
 
 const Signup = () => {
@@ -14,6 +16,8 @@ const Signup = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
 
@@ -43,6 +47,15 @@ const Signup = () => {
     setLoading(true);
 
     try {
+      // Ensure CSRF token is fetched and cookie is set before signup
+      const csrfToken = await apiService.fetchCsrfToken();
+      if (!csrfToken) {
+        console.warn('CSRF token not available, retrying...');
+        // Wait a bit and try again
+        await new Promise(resolve => setTimeout(resolve, 200));
+        await apiService.fetchCsrfToken();
+      }
+      
       // Send all form data including password_confirm to backend
       const result = await signup(formData);
       if (result.success) {
@@ -51,14 +64,15 @@ const Signup = () => {
         setError(result.error || 'Registration failed');
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      console.error('Signup error:', err);
+      setError(err.message || 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
+    <div className="auth-container auth-container-scrollable">
       <div className="auth-card">
         <h1>Sign Up</h1>
         <p className="auth-subtitle">Create your account to get started.</p>
@@ -120,30 +134,50 @@ const Signup = () => {
           
           <div className="auth-field">
             <label htmlFor="password">Password *</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="At least 8 characters"
-              minLength={8}
-            />
+            <div className="auth-password-wrapper">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="At least 8 characters"
+                minLength={8}
+              />
+              <button
+                type="button"
+                className="auth-password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
           </div>
           
           <div className="auth-field">
             <label htmlFor="password_confirm">Confirm Password *</label>
-            <input
-              id="password_confirm"
-              name="password_confirm"
-              type="password"
-              value={formData.password_confirm}
-              onChange={handleChange}
-              required
-              placeholder="Confirm your password"
-              minLength={8}
-            />
+            <div className="auth-password-wrapper">
+              <input
+                id="password_confirm"
+                name="password_confirm"
+                type={showPasswordConfirm ? 'text' : 'password'}
+                value={formData.password_confirm}
+                onChange={handleChange}
+                required
+                placeholder="Confirm your password"
+                minLength={8}
+              />
+              <button
+                type="button"
+                className="auth-password-toggle"
+                onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                aria-label={showPasswordConfirm ? 'Hide password' : 'Show password'}
+              >
+                {showPasswordConfirm ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
           </div>
           
           <button 

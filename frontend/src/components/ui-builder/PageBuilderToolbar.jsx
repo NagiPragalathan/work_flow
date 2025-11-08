@@ -77,6 +77,7 @@ function PageBuilderToolbar({
           </button>
           <button
             className="builder-nav-tab active"
+            onClick={() => navigateToBuilder('page-builder')}
             title="Page Builder"
           >
             <FiLayout />

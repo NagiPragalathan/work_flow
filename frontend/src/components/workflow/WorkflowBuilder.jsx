@@ -7,25 +7,13 @@ import {
   Background,
   Controls,
   MiniMap,
-  Panel,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
-import {
-  FiMenu,
-  FiPlay,
-  FiSquare,
-  FiSave,
-  FiFolder,
-  FiTrash2,
-  FiSun,
-  FiMoon,
-  FiEdit3,
-  FiMessageCircle,
-  FiGrid,
-  FiLink2,
-  FiSettings,
-  FiDownload,
-} from "react-icons/fi";
+  Panel
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { 
+  FiMenu, FiPlay, FiSquare, FiSave, FiFolder, FiTrash2, 
+  FiSun, FiMoon, FiEdit3, FiMessageCircle, FiGrid, FiLink2, FiSettings, FiDownload 
+} from 'react-icons/fi';
 
 import {
   WorkflowNode,
@@ -36,23 +24,22 @@ import {
   ExecutionStatusBar,
   ExecutionResultModal,
   ToastContainer,
-  VerticalToolbar,
-} from "../";
-import AIChatbot from "../ui/AIChatbot";
-import SettingsModal from "../ui/SettingsModal";
-import ExportModal from "../ui/ExportModal";
-import ImportModal from "../ui/ImportModal";
-import ClearWorkspaceModal from "../ui/ClearWorkspaceModal";
-import { nodeTypeDefinitions } from "../../nodeTypes.jsx";
-import { executionEngine } from "../../executionEngine";
-import { workflowApi } from "../../api/workflowApi";
-import { useTheme } from "../../theme.jsx";
-import { useNavigation } from "../../router/AppRouter";
-import { FiLayout } from "react-icons/fi";
-import NotesNode from "./NotesNode";
-import READMEViewerNode from "./READMEViewerNode";
-import "../../App.css";
-import NodeSettingsModal from "../ui/NodeSettingsModal";
+  VerticalToolbar
+} from '../';
+import AIChatbot from '../ui/AIChatbot';
+import SettingsModal from '../ui/SettingsModal';
+import ExportModal from '../ui/ExportModal';
+import ImportModal from '../ui/ImportModal';
+import ClearWorkspaceModal from '../ui/ClearWorkspaceModal';
+import { nodeTypeDefinitions } from '../../nodeTypes.jsx';
+import { executionEngine } from '../../executionEngine';
+import { workflowApi } from '../../api/workflowApi';
+import { useTheme } from '../../theme.jsx';
+import { useNavigation } from '../../router/AppRouter';
+import { FiLayout } from 'react-icons/fi';
+import NotesNode from './NotesNode';
+import READMEViewerNode from './READMEViewerNode';
+import '../../App.css';
 
 // Node types will be defined inside the component
 
@@ -104,6 +91,23 @@ function WorkflowBuilder() {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [clearWorkspaceModalOpen, setClearWorkspaceModalOpen] = useState(false);
   const [flowKey, setFlowKey] = useState(0);
+  const [activeTab, setActiveTab] = useState('workflow'); // 'workflow' or 'page-builder'
+  const [workflowName, setWorkflowName] = useState('Untitled Workflow');
+  const [isSaved, setIsSaved] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => {
+    const saved = localStorage.getItem('autoSaveEnabled');
+    return saved !== null ? saved === 'true' : true; // Default ON
+  });
+  const menuRef = useRef(null);
+  const hasLoadedWorkflow = useRef(false);
+  const savedWorkflowData = useRef(null);
+  
+  // Undo/Redo history
+  const historyRef = useRef([]);
+  const historyIndexRef = useRef(-1);
+  const maxHistorySize = 50;
 
   // Utility function to load all properties from localStorage for nodes
   const loadNodesWithProperties = useCallback((nodesToEnhance) => {
@@ -153,6 +157,204 @@ function WorkflowBuilder() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  // Load saved workflow from localStorage on mount (only once)
+  useEffect(() => {
+    if (hasLoadedWorkflow.current) return;
+    
+    try {
+      const savedWorkflow = localStorage.getItem('savedWorkflow');
+      const savedName = localStorage.getItem('workflowName');
+      
+      if (savedName) {
+        setWorkflowName(savedName);
+      }
+      
+      if (savedWorkflow) {
+        savedWorkflowData.current = JSON.parse(savedWorkflow);
+        hasLoadedWorkflow.current = true;
+        console.log('📂 Loaded workflow data from localStorage');
+      }
+    } catch (error) {
+      console.error('Error loading workflow:', error);
+    }
+  }, []);
+
+  // Store handlers in refs so they can be accessed before definition
+  const handlersRef = useRef({
+    handleSettingsClick: null,
+    handleExecutionClick: null,
+    deleteNode: null,
+    duplicateNode: null,
+    handleChatClick: null,
+    handleChatExecution: null
+  });
+
+  // Process saved workflow data after handlers are defined
+  useEffect(() => {
+    // Only process if we have saved data and haven't loaded yet
+    if (!hasLoadedWorkflow.current || !savedWorkflowData.current) return;
+    
+    // If nodes already exist, don't overwrite (user might have started working)
+    if (nodes.length > 0) {
+      hasLoadedWorkflow.current = false; // Mark as processed
+      return;
+    }
+    
+    // Wait for handlers to be defined
+    if (!handlersRef.current.handleSettingsClick) {
+      return; // Handlers not ready yet
+    }
+    
+    try {
+      const workflow = savedWorkflowData.current;
+      if (!workflow || !workflow.nodes || workflow.nodes.length === 0) {
+        hasLoadedWorkflow.current = false;
+        return;
+      }
+      
+      console.log('📂 Processing saved workflow:', { 
+        nodesCount: workflow.nodes.length, 
+        edgesCount: (workflow.edges || []).length 
+      });
+      
+      const loadedNodes = workflow.nodes.map(node => {
+        // Restore properties to localStorage
+        if (node.data && node.data.properties && Object.keys(node.data.properties).length > 0) {
+          try {
+            localStorage.setItem(`inputValues_${node.id}`, JSON.stringify(node.data.properties));
+            console.log(`📥 Restored properties for node ${node.id}:`, Object.keys(node.data.properties));
+          } catch (error) {
+            console.error(`Error saving to localStorage for node ${node.id}:`, error);
+          }
+        }
+        
+        return {
+          id: node.id,
+          type: node.type,
+          position: node.position || { x: 0, y: 0 },
+          data: {
+            label: node.data?.label || 'Node',
+            type: node.data?.type || node.type,
+            properties: node.data?.properties || {},
+            onSettingsClick: handlersRef.current.handleSettingsClick,
+            onExecutionClick: handlersRef.current.handleExecutionClick,
+            onDelete: handlersRef.current.deleteNode,
+            onDuplicate: handlersRef.current.duplicateNode,
+            onChatClick: handlersRef.current.handleChatClick,
+            onTrackExecution: handlersRef.current.handleChatExecution
+          }
+        };
+      });
+      
+      setNodes(loadedNodes);
+      setEdges(workflow.edges || []);
+      setIsSaved(true);
+      hasLoadedWorkflow.current = false; // Mark as processed to prevent re-loading
+      console.log('✅ Restored workflow from localStorage:', { 
+        nodes: loadedNodes.length, 
+        edges: (workflow.edges || []).length 
+      });
+    } catch (error) {
+      console.error('❌ Error processing saved workflow:', error);
+      hasLoadedWorkflow.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes.length]);
+
+  // Save auto-save preference
+  useEffect(() => {
+    localStorage.setItem('autoSaveEnabled', autoSaveEnabled.toString());
+  }, [autoSaveEnabled]);
+
+  // Auto-save workflow to localStorage whenever nodes or edges change (debounced)
+  useEffect(() => {
+    if (!autoSaveEnabled) {
+      // If auto-save is disabled, don't save
+      return;
+    }
+    
+    // Don't auto-save if we're still in the initial loading phase
+    // (wait a bit to ensure we're not saving during initial load)
+    if (hasLoadedWorkflow.current && savedWorkflowData.current && nodes.length === 0) {
+      return;
+    }
+    
+    const autoSaveTimer = setTimeout(() => {
+      try {
+        // Load all properties from localStorage before saving
+        const enhancedNodes = loadNodesWithProperties(nodes);
+        
+        const workflowToSave = {
+          nodes: enhancedNodes.map(node => ({
+            id: node.id,
+            type: node.type,
+            position: node.position,
+            data: {
+              label: node.data.label,
+              type: node.data.type,
+              properties: node.data.properties || {},
+              // Remove function references
+              onSettingsClick: undefined,
+              onExecutionClick: undefined,
+              onDelete: undefined,
+              onDuplicate: undefined,
+              onChatClick: undefined,
+              onTrackExecution: undefined
+            }
+          })),
+          edges: edges.map(edge => ({
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            sourceHandle: edge.sourceHandle,
+            targetHandle: edge.targetHandle,
+            type: edge.type,
+            animated: edge.animated,
+            style: edge.style,
+            markerEnd: edge.markerEnd
+          })),
+          version: '1.0.0',
+          savedAt: new Date().toISOString()
+        };
+        
+        localStorage.setItem('savedWorkflow', JSON.stringify(workflowToSave));
+        localStorage.setItem('workflowName', workflowName);
+        setIsSaved(true);
+        console.log('💾 Auto-saved workflow to localStorage:', { 
+          nodes: workflowToSave.nodes.length, 
+          edges: workflowToSave.edges.length 
+        });
+      } catch (error) {
+        console.error('Error auto-saving workflow:', error);
+      }
+    }, 1000); // Debounce by 1 second
+    
+    return () => clearTimeout(autoSaveTimer);
+  }, [nodes, edges, workflowName, loadNodesWithProperties, autoSaveEnabled]);
+  
+  // Save state to history for undo/redo
+  const saveToHistory = useCallback((nodesState, edgesState) => {
+    const state = {
+      nodes: JSON.parse(JSON.stringify(nodesState)),
+      edges: JSON.parse(JSON.stringify(edgesState)),
+      timestamp: Date.now()
+    };
+    
+    // Remove future history if we're not at the end
+    if (historyIndexRef.current < historyRef.current.length - 1) {
+      historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
+    }
+    
+    historyRef.current.push(state);
+    
+    // Limit history size
+    if (historyRef.current.length > maxHistorySize) {
+      historyRef.current.shift();
+    } else {
+      historyIndexRef.current++;
+    }
+  }, []);
+
   // Load execution history from localStorage on mount
   useEffect(() => {
     try {
@@ -198,6 +400,9 @@ function WorkflowBuilder() {
 
   const onConnect = useCallback(
     (params) => {
+      // Save current state to history before connecting
+      saveToHistory(nodes, edges);
+      
       // Determine edge style based on connection type
       const sourceNode = nodes.find((n) => n.id === params.source);
       const targetNode = nodes.find((n) => n.id === params.target);
@@ -336,16 +541,13 @@ function WorkflowBuilder() {
         return newEdges;
       });
     },
-    [nodes, edges]
+    [nodes, edges, saveToHistory]
   );
 
-  const handleSettingsClick = useCallback(
-    (nodeId) => {
-      const node = nodes.find((n) => n.id === nodeId);
-      setSelectedNodeForSettings(node);
-    },
-    [nodes]
-  );
+  const handleSettingsClick = useCallback((nodeId) => {
+    const node = nodes.find(n => n.id === nodeId);
+    setSelectedNodeForSettings(node);
+  }, [nodes]);
 
   const handleExecutionClick = useCallback(
     async (nodeId) => {
@@ -697,26 +899,23 @@ function WorkflowBuilder() {
     [nodes, loadNodesWithProperties, setExecutingNodes, showToast]
   );
 
-  const deleteNode = useCallback(
-    (nodeId) => {
-      // Clean up localStorage
-      try {
-        localStorage.removeItem(`inputValues_${nodeId}`);
-        console.log(`🗑️ Cleaned up localStorage for deleted node ${nodeId}`);
-      } catch (error) {
-        console.error("Error cleaning up localStorage:", error);
-      }
-
-      setNodes((nds) => nds.filter((node) => node.id !== nodeId));
-      setEdges((eds) =>
-        eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
-      );
-      if (selectedNodeForSettings?.id === nodeId) {
-        setSelectedNodeForSettings(null);
-      }
-    },
-    [selectedNodeForSettings]
-  );
+  const deleteNode = useCallback((nodeId) => {
+    // Clean up localStorage
+    try {
+      localStorage.removeItem(`inputValues_${nodeId}`);
+      console.log(`🗑️ Cleaned up localStorage for deleted node ${nodeId}`);
+    } catch (error) {
+      console.error('Error cleaning up localStorage:', error);
+    }
+    
+    setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+    setEdges((eds) => eds.filter(
+      (edge) => edge.source !== nodeId && edge.target !== nodeId
+    ));
+    if (selectedNodeForSettings?.id === nodeId) {
+      setSelectedNodeForSettings(null);
+    }
+  }, [selectedNodeForSettings]);
 
   const handleChatExecution = useCallback((executionData) => {
     const newExecution = {
@@ -1180,14 +1379,7 @@ function WorkflowBuilder() {
     });
 
     return unsubscribe;
-  }, [
-    handleSettingsClick,
-    handleExecutionClick,
-    deleteNode,
-    duplicateNode,
-    handleChatClick,
-    handleChatExecution,
-  ]);
+  }, [handleSettingsClick, handleExecutionClick, deleteNode, duplicateNode, handleChatClick, handleChatExecution]);
 
   // Ensure all nodes have the required handlers
   useEffect(() => {
@@ -1239,6 +1431,9 @@ function WorkflowBuilder() {
         return;
       }
 
+      // Save current state to history before adding node
+      saveToHistory(nodes, edges);
+
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
@@ -1262,26 +1457,15 @@ function WorkflowBuilder() {
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [
-      reactFlowInstance,
-      handleSettingsClick,
-      handleExecutionClick,
-      deleteNode,
-      duplicateNode,
-      handleChatClick,
-      hasExistingTrigger,
-    ]
+    [reactFlowInstance, handleSettingsClick, handleExecutionClick, deleteNode, duplicateNode, handleChatClick, hasExistingTrigger]
   );
 
-  const addNodeFromLibrary = useCallback(
-    (nodeType, nodeDef) => {
-      // Check for duplicate trigger nodes
-      if (hasExistingTrigger(nodeType)) {
-        alert(
-          `❌ Duplicate Trigger Node!\n\nOnly one '${nodeDef.name}' node is allowed in a workflow.\n\nPlease remove the existing trigger node first before adding a new one.`
-        );
-        return;
-      }
+  const addNodeFromLibrary = useCallback((nodeType, nodeDef) => {
+    // Check for duplicate trigger nodes
+    if (hasExistingTrigger(nodeType)) {
+      alert(`❌ Duplicate Trigger Node!\n\nOnly one '${nodeDef.name}' node is allowed in a workflow.\n\nPlease remove the existing trigger node first before adding a new one.`);
+      return;
+    }
 
       const newNode = {
         id: `node_${++nodeIdCounter.current}`,
@@ -1300,19 +1484,8 @@ function WorkflowBuilder() {
         },
       };
 
-      setNodes((nds) => nds.concat(newNode));
-    },
-    [
-      nodes,
-      handleSettingsClick,
-      handleExecutionClick,
-      deleteNode,
-      duplicateNode,
-      handleChatClick,
-      handleChatExecution,
-      hasExistingTrigger,
-    ]
-  );
+    setNodes((nds) => nds.concat(newNode));
+  }, [nodes, handleSettingsClick, handleExecutionClick, deleteNode, duplicateNode, handleChatClick, handleChatExecution, hasExistingTrigger]);
 
   const updateNodeData = useCallback(
     (nodeId, newData) => {
@@ -1842,8 +2015,39 @@ function WorkflowBuilder() {
   );
 
   const saveWorkflow = useCallback(() => {
-    setExportModalOpen(true);
-  }, []);
+    try {
+      // Load all properties from localStorage before saving
+      const enhancedNodes = loadNodesWithProperties(nodes);
+      
+      const workflowToSave = {
+        nodes: enhancedNodes.map(node => ({
+          ...node,
+          data: {
+            ...node.data,
+            // Remove function references
+            onSettingsClick: undefined,
+            onExecutionClick: undefined,
+            onDelete: undefined,
+            onDuplicate: undefined,
+            onChatClick: undefined,
+            onTrackExecution: undefined
+          }
+        })),
+        edges: edges,
+        version: '1.0.0',
+        savedAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem('savedWorkflow', JSON.stringify(workflowToSave));
+      localStorage.setItem('workflowName', workflowName);
+      setIsSaved(true);
+      showToast('✅ Workflow saved successfully!', 'success', 2000);
+      console.log('💾 Saved workflow to localStorage');
+    } catch (error) {
+      console.error('Error saving workflow:', error);
+      showToast('❌ Failed to save workflow', 'error', 3000);
+    }
+  }, [nodes, edges, workflowName, loadNodesWithProperties, showToast]);
 
   const handleImport = useCallback(
     async (importType, data) => {
@@ -2084,6 +2288,9 @@ function WorkflowBuilder() {
   }, [showToast]);
 
   const addNotesNode = useCallback(() => {
+    // Save current state to history before adding notes node
+    saveToHistory(nodes, edges);
+
     const newNode = {
       id: `node_${++nodeIdCounter.current}`,
       type: "notes",
@@ -2115,18 +2322,9 @@ function WorkflowBuilder() {
       const updatedNodes = [...nds, newNode];
       return updatedNodes;
     });
-    setFlowKey((prev) => prev + 1); // Force re-render
-    showToast("📝 Notes node added! Click to edit content.", "success", 3000);
-  }, [
-    nodes,
-    handleSettingsClick,
-    handleExecutionClick,
-    deleteNode,
-    duplicateNode,
-    handleChatClick,
-    handleChatExecution,
-    showToast,
-  ]);
+    setFlowKey(prev => prev + 1); // Force re-render
+    showToast('📝 Notes node added! Click to edit content.', 'success', 3000);
+  }, [nodes, handleSettingsClick, handleExecutionClick, deleteNode, duplicateNode, handleChatClick, handleChatExecution, showToast]);
 
   const loadWorkflow = useCallback(() => {
     const input = document.createElement("input");
@@ -2221,10 +2419,7 @@ function WorkflowBuilder() {
         logsExpanded={logsExpanded}
       />
 
-      <div
-        className="main-content"
-        style={{ marginLeft: libraryOpen ? "380px" : "0" }}
-      >
+      <div className="main-content" style={{ marginLeft: libraryOpen ? '380px' : '0' }}>
         <div className="toolbar">
           <div className="toolbar-left">
             <button
@@ -2245,7 +2440,7 @@ function WorkflowBuilder() {
               </button>
               <button
                 className="builder-nav-tab"
-                onClick={() => navigateToBuilder("page-builder")}
+                onClick={() => navigateToBuilder('page-builder')}
                 title="Page Builder"
               >
                 <FiLayout />
@@ -2257,22 +2452,17 @@ function WorkflowBuilder() {
           <div className="toolbar-center">
             {hasManualTrigger && (
               <>
-                <button
-                  className="toolbar-btn primary"
-                  onClick={executeWorkflow}
-                  disabled={
-                    execution?.status === "running" || nodes.length === 0
-                  }
-                >
-                  <FiPlay /> Execute
-                </button>
-                {execution?.status === "running" && (
-                  <button
-                    className="toolbar-btn danger"
-                    onClick={stopExecution}
-                  >
-                    <FiSquare /> Stop
-                  </button>
+            <button
+              className="toolbar-btn primary"
+              onClick={executeWorkflow}
+              disabled={execution?.status === 'running' || nodes.length === 0}
+            >
+              <FiPlay /> Execute
+            </button>
+            {execution?.status === 'running' && (
+              <button className="toolbar-btn danger" onClick={stopExecution}>
+                <FiSquare /> Stop
+              </button>
                 )}
               </>
             )}
@@ -2299,22 +2489,25 @@ function WorkflowBuilder() {
                 </div>
               </div>
             </div>
-            <button
-              className="toolbar-btn icon-only"
+            <button 
+              className="toolbar-btn icon-only" 
               onClick={() => setSettingsOpen(true)}
               title="Settings"
             >
               <FiSettings />
             </button>
-            <button
-              className="toolbar-btn icon-only"
-              onClick={toggleTheme}
-              title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+            <button 
+              className="toolbar-btn icon-only" 
+              onClick={toggleTheme} 
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
             >
-              {theme === "light" ? <FiMoon /> : <FiSun />}
+              {theme === 'light' ? <FiMoon /> : <FiSun />}
             </button>
           </div>
         </div>
+
+        {/* Content Area - Workflow Builder */}
+        {activeTab === 'workflow' ? (
 
         <div className="workflow-canvas" ref={reactFlowWrapper}>
           <ReactFlow
@@ -2369,6 +2562,7 @@ function WorkflowBuilder() {
             />
           </ReactFlow>
         </div>
+        ) : null}
       </div>
 
       {/* Render NodeSettingsModal as a popup instead of the side PropertyPanel */}
@@ -2403,56 +2597,52 @@ function WorkflowBuilder() {
         onToggleExpanded={setLogsExpanded}
       />
 
-      <ExecutionResultModal
-        isOpen={!!executionResult}
-        onClose={() => setExecutionResult(null)}
-        result={executionResult}
-      />
-
-      {/* Debug Panel */}
-      {edgeDebugInfo.length > 0 && (
-        <div
-          style={{
-            position: "fixed",
-            top: "70px",
-            right: "20px",
-            background: "rgba(0,0,0,0.8)",
-            color: "white",
-            padding: "10px",
-            borderRadius: "5px",
-            fontSize: "12px",
-            zIndex: 1000,
-            maxWidth: "300px",
-          }}
-        >
-          <div>
-            <strong>Edge Debug Info:</strong>
-          </div>
-          <div>Total Edges: {edges.length}</div>
-          <div>Debug Logs: {edgeDebugInfo.length}</div>
-          {edgeDebugInfo.slice(-3).map((info, idx) => (
-            <div key={idx}>
-              {info.timestamp}: {info.id}
-            </div>
-          ))}
-          <button
-            onClick={() => setEdgeDebugInfo([])}
-            style={{ marginTop: "5px", padding: "2px 5px" }}
-          >
-            Clear
-          </button>
-        </div>
-      )}
-
+            <ExecutionResultModal 
+              isOpen={!!executionResult}
+              onClose={() => setExecutionResult(null)}
+              result={executionResult}
+            />
+            
+            {/* Debug Panel */}
+            {edgeDebugInfo.length > 0 && (
+              <div style={{
+                position: 'fixed',
+                top: '70px',
+                right: '20px',
+                background: 'rgba(0,0,0,0.8)',
+                color: 'white',
+                padding: '10px',
+                borderRadius: '5px',
+                fontSize: '12px',
+                zIndex: 1000,
+                maxWidth: '300px'
+              }}>
+                <div><strong>Edge Debug Info:</strong></div>
+                <div>Total Edges: {edges.length}</div>
+                <div>Debug Logs: {edgeDebugInfo.length}</div>
+                {edgeDebugInfo.slice(-3).map((info, idx) => (
+                  <div key={idx}>
+                    {info.timestamp}: {info.id}
+                  </div>
+                ))}
+                <button 
+                  onClick={() => setEdgeDebugInfo([])}
+                  style={{ marginTop: '5px', padding: '2px 5px' }}
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+      
       {/* Vertical Toolbar */}
-      <VerticalToolbar
+      <VerticalToolbar 
         onExport={saveWorkflow}
         onImport={openImportModal}
         onAddNotes={addNotesNode}
         onOpenAI={() => setChatOpen(true)}
         onClearWorkspace={handleClearWorkspace}
         onMagic={() => {
-          console.log("AI/Magic features");
+          console.log('AI/Magic features');
           setAiChatbotOpen(true);
         }}
       />
@@ -2479,19 +2669,19 @@ function WorkflowBuilder() {
         onClose={() => setExportModalOpen(false)}
         onExport={handleExport}
       />
-
-      {/* Import Modal */}
-      <ImportModal
-        isOpen={importModalOpen}
-        onClose={() => setImportModalOpen(false)}
-        onImport={handleImport}
-      />
-
-      {/* Clear Workspace Modal */}
-      <ClearWorkspaceModal
-        isOpen={clearWorkspaceModalOpen}
-        onClose={() => setClearWorkspaceModalOpen(false)}
-        onConfirm={confirmClearWorkspace}
+      
+          {/* Import Modal */}
+          <ImportModal 
+            isOpen={importModalOpen} 
+            onClose={() => setImportModalOpen(false)}
+            onImport={handleImport}
+          />
+          
+          {/* Clear Workspace Modal */}
+          <ClearWorkspaceModal 
+            isOpen={clearWorkspaceModalOpen} 
+            onClose={() => setClearWorkspaceModalOpen(false)}
+            onConfirm={confirmClearWorkspace}
       />
     </div>
   );

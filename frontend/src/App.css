@@ -1,9 +1,16 @@
+.app-router {
+  width: 100vw;
+  height: 100vh;
+  background: #ffffff !important;
+  overflow: hidden;
+}
+
 .app {
   width: 100vw;
   height: 100vh;
   display: flex;
   overflow: hidden;
-  background: var(--background);
+  background: #ffffff !important; /* White background as requested */
   position: relative;
   margin: 0;
   padding: 0;
@@ -249,6 +256,7 @@
   transition: margin-left 0.3s ease, margin-right 0.3s ease, height 0.3s ease,
     width 0.3s ease;
   position: relative;
+  background: #ffffff !important; /* White background */
   height: calc(100vh - var(--logs-height));
   min-height: 400px;
   width: 100%;
@@ -257,6 +265,592 @@
   padding: 0;
 }
 
+<<<<<<< HEAD
+=======
+/* n8n-style Workflow Header */
+.workflow-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  height: 60px;
+  box-sizing: border-box;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.workflow-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--textSecondary);
+  font-size: 14px;
+}
+
+.workflow-owner {
+  color: var(--textSecondary);
+}
+
+.breadcrumb-separator {
+  color: var(--textSecondary);
+}
+
+.workflow-name-input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  min-width: 200px;
+  outline: none;
+}
+
+.workflow-name-input:hover {
+  background: var(--hover);
+}
+
+.workflow-name-input:focus {
+  background: var(--hover);
+  outline: 1px solid var(--primary);
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.header-tabs {
+  display: flex;
+  gap: 0;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  padding: 4px;
+  overflow: hidden;
+}
+
+.header-tab {
+  padding: 10px 20px;
+  background: #000000;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.header-tab:hover {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+.header-tab.active {
+  background: #2a2a2a;
+  color: #ffffff;
+}
+
+.header-tab.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 16px;
+  background: #ffffff;
+  border-radius: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.header-stats {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.header-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.header-stat svg {
+  font-size: 16px;
+  color: var(--textSecondary);
+}
+
+.header-stat .stat-label {
+  color: var(--textSecondary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.header-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.header-btn:hover {
+  background: var(--hover);
+  border-color: var(--borderHover);
+}
+
+.header-btn.primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.header-btn.primary:hover {
+  background: var(--primaryHover);
+  border-color: var(--primaryHover);
+}
+
+.header-btn.save-btn {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.header-btn.save-btn:hover {
+  background: var(--hover);
+}
+
+.header-btn.icon-only {
+  padding: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-btn.icon-only svg {
+  font-size: 18px;
+}
+
+.header-menu-container {
+  position: relative;
+}
+
+.header-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px var(--shadow);
+  min-width: 200px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background: var(--hover);
+}
+
+.dropdown-item svg {
+  font-size: 16px;
+  color: var(--textSecondary);
+}
+
+.executions-view {
+  height: calc(100vh - 60px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Executions View Container */
+.executions-view-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  background: var(--background);
+}
+
+/* Executions Sidebar */
+.executions-sidebar {
+  width: 320px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.executions-sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.executions-sidebar-header h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.executions-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auto-refresh-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--textSecondary);
+  cursor: pointer;
+}
+
+.auto-refresh-toggle input {
+  cursor: pointer;
+}
+
+.no-executions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--textSecondary);
+}
+
+.no-executions svg {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-executions-subtitle {
+  font-size: 13px;
+  margin-top: 8px;
+  opacity: 0.7;
+}
+
+.executions-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.execution-item {
+  padding: 12px;
+  margin-bottom: 8px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.execution-item:hover {
+  background: var(--hover);
+  border-color: var(--borderHover);
+}
+
+.execution-item.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.execution-item-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.execution-status-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.execution-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.execution-date {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: inherit;
+}
+
+.execution-status {
+  font-size: 12px;
+  opacity: 0.8;
+  color: inherit;
+}
+
+.execution-item.selected .execution-date,
+.execution-item.selected .execution-status {
+  color: white;
+}
+
+/* Executions Workflow Area */
+.executions-workflow-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.execution-details-header {
+  padding: 12px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.execution-details-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.execution-details-date {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.execution-details-status {
+  font-size: 13px;
+  color: var(--textSecondary);
+}
+
+.executions-workflow-canvas {
+  flex: 1;
+  position: relative;
+  background: var(--background);
+}
+
+.no-execution-selected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--textSecondary);
+}
+
+.no-execution-selected svg {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* Execution Status Indicator on Nodes */
+.execution-status-indicator {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  z-index: 1000;
+  background: var(--background);
+  border-radius: 50%;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.execution-status-indicator.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid #ef4444;
+}
+
+.execution-status-indicator.success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 2px solid #10b981;
+}
+
+/* Rename Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.modal-content {
+  background: var(--surface);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  min-width: 400px;
+  max-width: 90vw;
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--textSecondary);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.rename-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.rename-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.modal-footer {
+  padding: 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.modal-btn.secondary {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.modal-btn.secondary:hover {
+  background: var(--hover);
+}
+
+.modal-btn.primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.modal-btn.primary:hover {
+  background: var(--primaryHover);
+  border-color: var(--primaryHover);
+}
+
+>>>>>>> c9182d59202747c42decb9fe4ebb42f9333afc74
 .toolbar {
   height: 60px;
   background: var(--surface);
@@ -580,10 +1174,15 @@ button.toolbar-btn.primary svg {
 .workflow-canvas {
   flex: 1;
   position: relative;
+<<<<<<< HEAD
   background: var(--background);
   height: calc(
     100vh - 60px - var(--logs-height)
   ); /* Account for toolbar (60px) + logs bar */
+=======
+  background: #ffffff !important; /* White background */
+  height: calc(100vh - 60px - var(--logs-height)); /* Account for toolbar (60px) + logs bar */
+>>>>>>> c9182d59202747c42decb9fe4ebb42f9333afc74
   width: 100%;
   min-height: 400px;
   overflow: hidden;

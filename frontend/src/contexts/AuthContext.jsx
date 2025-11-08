@@ -16,31 +16,31 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check authentication status on mount and get CSRF token
-  useEffect(() => {
-    // First get CSRF token, then check auth
-    const initialize = async () => {
-      try {
-        // Fetch CSRF token first to ensure cookie is set
-        await fetch(`${apiService.baseURL}/auth/csrf-token/`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-        // Then check actual auth status
-        await checkAuthStatus();
-      } catch (error) {
-        console.warn('Failed to initialize auth:', error);
-        // Still try to check auth status
-        checkAuthStatus();
-      }
-    };
-    initialize();
-  }, []);
-
+  // Define checkAuthStatus first
   const checkAuthStatus = async () => {
     try {
-      const response = await apiService.checkAuth();
-      if (response.authenticated && response.user) {
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Auth check timeout')), 2000); // Reduced to 2 seconds
+      });
+      
+      // Race between the API call and timeout
+      let response;
+      try {
+        response = await Promise.race([
+          apiService.checkAuth(),
+          timeoutPromise
+        ]);
+      } catch (error) {
+        if (error.message === 'Auth check timeout') {
+          console.warn('Auth check timed out - backend may not be available');
+        } else {
+          console.error('Auth check error:', error);
+        }
+        response = null;
+      }
+      
+      if (response && response.authenticated && response.user) {
         setUser(response.user);
         setIsAuthenticated(true);
         localStorage.setItem('authUser', JSON.stringify(response.user));
@@ -58,6 +58,54 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
+  // Check authentication status on mount and get CSRF token
+  useEffect(() => {
+    console.log('AuthProvider: Initializing auth check...');
+    
+    // First get CSRF token, then check auth
+    const initialize = async () => {
+      // Set a timeout to ensure loading state doesn't hang forever
+      const timeoutId = setTimeout(() => {
+        console.warn('Auth initialization timeout - setting loading to false');
+        setLoading(false);
+        setIsAuthenticated(false);
+      }, 2000); // Reduced to 2 seconds for faster response
+
+      try {
+        // Fetch CSRF token first to ensure cookie is set (with timeout)
+        const csrfController = new AbortController();
+        const csrfTimeout = setTimeout(() => {
+          csrfController.abort();
+          console.warn('CSRF fetch timeout');
+        }, 1000); // 1 second timeout
+        
+        try {
+          await fetch(`${apiService.baseURL}/auth/csrf-token/`, {
+            method: 'GET',
+            credentials: 'include',
+            signal: csrfController.signal,
+          });
+        } catch (err) {
+          console.warn('CSRF token fetch failed:', err);
+          // Continue even if CSRF fails
+        } finally {
+          clearTimeout(csrfTimeout);
+        }
+        
+        // Then check actual auth status (with timeout)
+        await checkAuthStatus();
+        clearTimeout(timeoutId);
+      } catch (error) {
+        console.warn('Failed to initialize auth:', error);
+        clearTimeout(timeoutId);
+        // Ensure loading is set to false
+        setLoading(false);
+        setIsAuthenticated(false);
+      }
+    };
+    initialize();
+  }, []);
 
   const signup = async (userData) => {
     try {

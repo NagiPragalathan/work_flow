@@ -33,14 +33,17 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
-  background: var(--background);
-  color: var(--text);
+  background: #ffffff !important; /* White background as requested */
+  color: #000000; /* Black text */
   transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  padding: 0;
 }
 
 #root {
   width: 100vw;
   height: 100vh;
+  background: #ffffff; /* White background */
 }
 
 ::-webkit-scrollbar {

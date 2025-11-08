@@ -16,10 +16,12 @@ class ApiService {
     const cookies = document.cookie.split(';');
     for (let cookie of cookies) {
       const [key, value] = cookie.trim().split('=');
-      if (key === name) {
-        return value;
+      if (key === name && value) {
+        console.log('CSRF token found in cookies');
+        return decodeURIComponent(value);
       }
     }
+    console.log('CSRF token not found in cookies');
     return null;
   }
 
@@ -32,10 +34,28 @@ class ApiService {
         method: 'GET',
         credentials: 'include',
       });
+      
       // CSRF token might be in response header or body
-      const csrfToken = response.headers.get('X-CSRFToken') || 
-                       (await response.json().then(data => data.csrfToken).catch(() => null)) ||
-                       this.getCsrfToken();
+      let csrfToken = response.headers.get('X-CSRFToken');
+      if (!csrfToken) {
+        try {
+          const data = await response.json();
+          csrfToken = data.csrfToken;
+        } catch (e) {
+          // Ignore JSON parse error
+        }
+      }
+      
+      // Wait a bit for cookie to be set by browser
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      // Always try to get from cookies after fetching (most reliable)
+      const cookieToken = this.getCsrfToken();
+      if (cookieToken) {
+        csrfToken = cookieToken;
+      }
+      
+      console.log('CSRF token fetched:', csrfToken ? 'Token available' : 'No token');
       return csrfToken;
     } catch (error) {
       console.warn('Failed to fetch CSRF token:', error);
@@ -55,13 +75,24 @@ class ApiService {
     
     // Include CSRF token for state-changing methods
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
+      // Always try to get from cookies first (most reliable)
       let csrfToken = this.getCsrfToken();
       if (!csrfToken) {
         // Try to fetch if not available
         csrfToken = await this.fetchCsrfToken();
+        // After fetching, try cookies again
+        if (!csrfToken) {
+          csrfToken = this.getCsrfToken();
+        }
       }
       if (csrfToken) {
-        headers['X-CSRFToken'] = csrfToken;
+        // Django expects X-CSRFTOKEN (all caps) based on CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
+        // The HTTP_ prefix is added automatically by Django
+        headers['X-CSRFTOKEN'] = csrfToken;
+        headers['X-CSRFToken'] = csrfToken; // Also try alternative for compatibility
+        console.log('Adding CSRF token to headers');
+      } else {
+        console.warn('No CSRF token available for', method, 'request');
       }
     }
     
@@ -116,8 +147,9 @@ class ApiService {
         const csrfToken = await this.fetchCsrfToken();
         if (csrfToken && method !== 'GET') {
           console.log('Retrying request with CSRF token...');
-          // Retry the request with CSRF token
-          config.headers['X-CSRFToken'] = csrfToken;
+          // Retry the request with CSRF token (Django expects X-CSRFTOKEN)
+          config.headers['X-CSRFTOKEN'] = csrfToken;
+          config.headers['X-CSRFToken'] = csrfToken; // Also try alternative
           const retryResponse = await fetch(url, config);
           if (retryResponse.ok) {
             return await retryResponse.json();

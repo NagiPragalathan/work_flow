@@ -20,7 +20,6 @@ const loadGrapesJS = async () => {
     grapesjsLoaded = true;
     return grapesjs;
   } catch (error) {
-    console.warn('GrapesJS not available:', error);
     return null;
   }
 };
@@ -36,9 +35,10 @@ function PageBuilder() {
   const [showCodeExport, setShowCodeExport] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [activePanel, setActivePanel] = useState('blocks'); // blocks, layers, styles
-  const [activePropTab, setActivePropTab] = useState('properties'); // properties, styles-props
+  const [activeRightTab, setActiveRightTab] = useState('properties'); // layers, properties, styles-props
   const [hasChanges, setHasChanges] = useState(false);
+  const [initError, setInitError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Initialize GrapesJS
   useEffect(() => {
@@ -46,6 +46,9 @@ function PageBuilder() {
     
     let timer = null;
     let cleanupTimer = null;
+    
+    setIsLoading(true);
+    setInitError(null);
     
     // Helper function to initialize GrapesJS commands
     const setupGrapesJSCommands = (grapes) => {
@@ -70,12 +73,22 @@ function PageBuilder() {
         }
       });
       
-      grapes.Commands.add('show-blocks', {
-        run: () => setActivePanel('blocks')
+      grapes.Commands.add('show-layers', {
+        run: () => setActiveRightTab('layers')
       });
       
-      grapes.Commands.add('show-layers', {
-        run: () => setActivePanel('layers')
+      // Disable fullscreen command to prevent UI from hiding
+      grapes.Commands.add('fullscreen', {
+        run: () => {
+          // Do nothing - prevent fullscreen from hiding UI
+        }
+      });
+      
+      // Disable preview command or make it not hide UI
+      grapes.Commands.add('preview', {
+        run: () => {
+          // Do nothing - prevent preview from hiding UI
+        }
       });
       
       // Track changes
@@ -83,44 +96,307 @@ function PageBuilder() {
         setHasChanges(true);
       });
       
+      // When component is selected, show layers tab
+      grapes.on('component:selected', () => {
+        setActiveRightTab('layers');
+        
+        // Ensure UI stays visible
+        const leftPanel = document.querySelector('.left-panel');
+        const rightPanel = document.querySelector('.right-panel');
+        const toolbar = document.querySelector('.page-builder-toolbar');
+        
+        if (leftPanel) {
+          leftPanel.style.display = 'flex';
+          leftPanel.style.visibility = 'visible';
+        }
+        if (rightPanel) {
+          rightPanel.style.display = 'flex';
+          rightPanel.style.visibility = 'visible';
+        }
+        if (toolbar) {
+          toolbar.style.display = 'flex';
+          toolbar.style.visibility = 'visible';
+        }
+      });
+      
+      // Global variable to track dragged block
+      window.draggedBlockId = null;
+      
       editorRef.current = grapes;
       setEditor(grapes);
+      setIsLoading(false);
     };
     
     // Load grapesjs dynamically and initialize
     loadGrapesJS().then((grapesjsLib) => {
       if (!grapesjsLib) {
-        console.warn('GrapesJS is not available. Page Builder will not function.');
+        setInitError('GrapesJS library not found. Please install it: npm install grapesjs');
+        setIsLoading(false);
         return;
       }
       
-      // Small delay to ensure DOM is ready
       timer = setTimeout(async () => {
         try {
-          // Dynamically import getGrapesConfig
           const { getGrapesConfig } = await import('./grapesConfig');
           
-          // Ensure all containers exist in DOM before initialization
+          // Ensure all containers exist and are accessible
+          const blocksContainer = document.getElementById('blocks-container');
           const traitsContainer = document.getElementById('traits-container');
-          const stylesContainer = document.getElementById('styles-container');
+          const layersContainer = document.getElementById('layers-container');
           const selectorsContainer = document.getElementById('selectors-container');
           const stylesSectorsContainer = document.getElementById('styles-sectors-container');
+          const editorContainer = document.getElementById('gjs-editor');
           
-          if (!traitsContainer || !stylesContainer || !selectorsContainer || !stylesSectorsContainer) {
-            console.error('GrapesJS containers not found, retrying...');
+          if (!blocksContainer || !traitsContainer || !layersContainer || !selectorsContainer || !stylesSectorsContainer || !editorContainer) {
             cleanupTimer = setTimeout(() => {
+              try {
               const config = getGrapesConfig(theme);
               const grapes = grapesjsLib.init(config);
               setupGrapesJSCommands(grapes);
+              } catch (error) {
+                setInitError(`Initialization failed: ${error.message}`);
+                setIsLoading(false);
+              }
             }, 200);
             return;
           }
           
+          // Ensure containers are valid DOM nodes
+          if (!(blocksContainer instanceof HTMLElement) || 
+              !(traitsContainer instanceof HTMLElement) || 
+              !(layersContainer instanceof HTMLElement) || 
+              !(selectorsContainer instanceof HTMLElement) || 
+              !(stylesSectorsContainer instanceof HTMLElement) || 
+              !(editorContainer instanceof HTMLElement)) {
+            setInitError('Invalid container elements found');
+            setIsLoading(false);
+            return;
+          }
+          
+          // Ensure containers are visible (at least for initialization)
+          blocksContainer.style.display = 'block';
+          layersContainer.style.display = 'block';
+          
           const config = getGrapesConfig(theme);
-          const grapes = grapesjsLib.init(config);
+          
+          // Verify config before initialization
+          if (!config || !config.container) {
+            setInitError('Invalid GrapesJS configuration');
+            setIsLoading(false);
+            return;
+          }
+          
+          // Validate blocks
+          if (!config.blockManager?.blocks || !Array.isArray(config.blockManager.blocks)) {
+            setInitError('Invalid blocks configuration');
+            setIsLoading(false);
+            return;
+          }
+          
+          // Double-check that all appendTo containers exist
+          const appendToSelectors = [
+            config.blockManager?.appendTo,
+            config.layerManager?.appendTo,
+            config.traitManager?.appendTo,
+            config.selectorManager?.appendTo,
+            config.styleManager?.appendTo
+          ];
+          
+          for (const selector of appendToSelectors) {
+            if (selector) {
+              const element = typeof selector === 'string' 
+                ? document.querySelector(selector)
+                : selector;
+              if (!element || !(element instanceof HTMLElement)) {
+                setInitError(`Container not found: ${selector}`);
+                setIsLoading(false);
+                return;
+              }
+            }
+          }
+          
+          let grapes;
+          try {
+            grapes = grapesjsLib.init(config);
+          } catch (initError) {
+            setInitError(`GrapesJS init failed: ${initError.message}. Check console for details.`);
+            setIsLoading(false);
+            console.error('GrapesJS initialization error:', initError);
+            console.error('Config:', config);
+            return;
+          }
+          
+          window.grapesjsEditor = grapes;
+          
+          grapes.on('load', () => {
+            const canvas = grapes.Canvas;
+            const canvasEl = canvas.getElement();
+            const frameEl = canvas.getFrameEl();
+            
+            if (canvasEl) {
+              canvasEl.style.pointerEvents = 'auto';
+            }
+            if (frameEl) {
+              frameEl.style.pointerEvents = 'auto';
+              
+              // Inject Tailwind CSS after canvas loads
+              setTimeout(() => {
+                if (frameEl.contentDocument && frameEl.contentDocument.head) {
+                  const existingTailwind = frameEl.contentDocument.head.querySelector('script[src*="tailwindcss"]');
+                  if (!existingTailwind) {
+                    const script = frameEl.contentDocument.createElement('script');
+                    script.src = 'https://cdn.tailwindcss.com';
+                    script.async = true;
+                    frameEl.contentDocument.head.appendChild(script);
+                  }
+                }
+              }, 100);
+            }
+          });
+          
+          setTimeout(() => {
+            const blockElements = document.querySelectorAll('.gjs-block');
+            if (blockElements.length > 0) {
+              blockElements.forEach(block => {
+                block.style.cursor = 'grab';
+                block.draggable = true;
+                block.setAttribute('draggable', 'true');
+                
+                block.addEventListener('mousedown', () => {
+                  block.style.cursor = 'grabbing';
+                });
+                block.addEventListener('mouseup', () => {
+                  block.style.cursor = 'grab';
+                });
+                block.addEventListener('dragend', () => {
+                  block.style.cursor = 'grab';
+                });
+              });
+              
+              setTimeout(() => {
+                const frame = grapes.Canvas.getFrameEl();
+                if (frame && frame.contentDocument && frame.contentDocument.body) {
+                  const frameBody = frame.contentDocument.body;
+                  
+                  if (!window.draggedBlockId) {
+                    window.draggedBlockId = null;
+                  }
+                  
+                  const blockContentMap = {
+                    'Text': '<div class="text-base text-gray-700">Edit this text</div>',
+                    'Heading': '<h1 class="text-4xl font-bold text-gray-900 mb-4">Heading</h1>',
+                    'Paragraph': '<p class="text-base text-gray-600 leading-relaxed">This is a paragraph. Click to edit the text.</p>',
+                    'Button': '<button class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 cursor-pointer">Click Me</button>',
+                    'Image': '<img src="https://via.placeholder.com/350x200" alt="Placeholder Image" class="w-full h-auto rounded-lg shadow-md">',
+                    'Container': '<div class="p-5 border-2 border-dashed border-gray-300 rounded-lg min-h-[100px] bg-gray-50">Container - Drop elements here</div>',
+                    '2 Columns': '<div class="flex flex-col md:flex-row gap-5"><div class="flex-1 p-5 border border-gray-300 rounded-lg bg-white">Column 1</div><div class="flex-1 p-5 border border-gray-300 rounded-lg bg-white">Column 2</div></div>',
+                    '3 Columns': '<div class="flex flex-col md:flex-row gap-5"><div class="flex-1 p-5 border border-gray-300 rounded-lg bg-white">Column 1</div><div class="flex-1 p-5 border border-gray-300 rounded-lg bg-white">Column 2</div><div class="flex-1 p-5 border border-gray-300 rounded-lg bg-white">Column 3</div></div>',
+                    'Section': '<section class="py-10 px-5 bg-gray-100 my-5 rounded-lg"><h2 class="text-3xl font-bold text-gray-900 mb-4">Section Title</h2><p class="text-gray-600">Section content goes here.</p></section>',
+                    'Card': '<div class="border border-gray-200 rounded-xl p-6 shadow-lg bg-white"><h3 class="text-2xl font-bold text-gray-900 mb-3">Card Title</h3><p class="text-gray-600 mb-4">Card content goes here.</p><button class="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 cursor-pointer">Action</button></div>'
+                  };
+                  
+                  frameBody.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.dataTransfer.dropEffect = 'copy';
+                  });
+                  
+                  frameBody.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (window.draggedBlockId) {
+                      const content = blockContentMap[window.draggedBlockId];
+                      if (content) {
+                        grapes.addComponents(content);
+                        window.draggedBlockId = null;
+                      }
+                    }
+                  });
+                  
+                  frameBody.style.minHeight = '100vh';
+                  frameBody.style.background = '#fff';
+                  
+                  blockElements.forEach((block) => {
+                    const blockText = block.textContent.trim();
+                    
+                    block.addEventListener('dragstart', (e) => {
+                      window.draggedBlockId = blockText;
+                      if (e.dataTransfer) {
+                        e.dataTransfer.effectAllowed = 'copy';
+                        e.dataTransfer.setData('text/plain', blockText);
+                      }
+                    });
+                    
+                    block.addEventListener('dragend', () => {
+                      setTimeout(() => {
+                        if (window.draggedBlockId === blockText) {
+                          window.draggedBlockId = null;
+                        }
+                      }, 100);
+                    });
+                  });
+                } else {
+                  setTimeout(() => {
+                    const frame = grapes.Canvas.getFrameEl();
+                    if (frame && frame.contentDocument && frame.contentDocument.body) {
+                      const frameBody = frame.contentDocument.body;
+                      
+                      if (!window.draggedBlockId) {
+                        window.draggedBlockId = null;
+                      }
+                      
+                      const blockContentMap = {
+                        'Text': '<div class="text-base text-gray-700">Edit this text</div>',
+                        'Heading': '<h1 class="text-4xl font-bold text-gray-900 mb-4">Heading</h1>',
+                        'Paragraph': '<p class="text-base text-gray-600 leading-relaxed">This is a paragraph. Click to edit the text.</p>',
+                        'Button': '<button class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 cursor-pointer">Click Me</button>',
+                        'Image': '<img src="https://via.placeholder.com/350x200" alt="Placeholder Image" class="w-full h-auto rounded-lg shadow-md">',
+                        'Container': '<div class="p-5 border-2 border-dashed border-gray-300 rounded-lg min-h-[100px] bg-gray-50">Container - Drop elements here</div>',
+                        '2 Columns': '<div class="flex flex-col md:flex-row gap-5"><div class="flex-1 p-5 border border-gray-300 rounded-lg bg-white">Column 1</div><div class="flex-1 p-5 border border-gray-300 rounded-lg bg-white">Column 2</div></div>',
+                        '3 Columns': '<div class="flex flex-col md:flex-row gap-5"><div class="flex-1 p-5 border border-gray-300 rounded-lg bg-white">Column 1</div><div class="flex-1 p-5 border border-gray-300 rounded-lg bg-white">Column 2</div><div class="flex-1 p-5 border border-gray-300 rounded-lg bg-white">Column 3</div></div>',
+                        'Section': '<section class="py-10 px-5 bg-gray-100 my-5 rounded-lg"><h2 class="text-3xl font-bold text-gray-900 mb-4">Section Title</h2><p class="text-gray-600">Section content goes here.</p></section>',
+                        'Card': '<div class="border border-gray-200 rounded-xl p-6 shadow-lg bg-white"><h3 class="text-2xl font-bold text-gray-900 mb-3">Card Title</h3><p class="text-gray-600 mb-4">Card content goes here.</p><button class="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 cursor-pointer">Action</button></div>'
+                      };
+                      
+                      frameBody.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.dataTransfer.dropEffect = 'copy';
+                      });
+                      
+                      frameBody.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (window.draggedBlockId) {
+                          const content = blockContentMap[window.draggedBlockId];
+                          if (content) {
+                            grapes.addComponents(content);
+                            window.draggedBlockId = null;
+                          }
+                        }
+                      });
+                      
+                      const blockElements = document.querySelectorAll('.gjs-block');
+                      blockElements.forEach((block) => {
+                        const blockText = block.textContent.trim();
+                        block.addEventListener('dragstart', (e) => {
+                          window.draggedBlockId = blockText;
+                          if (e.dataTransfer) {
+                            e.dataTransfer.effectAllowed = 'copy';
+                            e.dataTransfer.setData('text/plain', blockText);
+                          }
+                        });
+                      });
+                    }
+                  }, 1000);
+                }
+              }, 1500);
+            }
+          }, 500);
+          
           setupGrapesJSCommands(grapes);
           
-          // Load project from localStorage if exists
           const savedProject = localStorage.getItem('gjsProject');
           if (savedProject) {
             try {
@@ -129,21 +405,29 @@ function PageBuilder() {
                 setProjectName(project.projectName);
               }
             } catch (error) {
-              console.error('Error loading project:', error);
+              // Silent fail
             }
           }
         } catch (error) {
-          console.error('Error initializing GrapesJS:', error);
+          setInitError(`Initialization failed: ${error.message}`);
+          setIsLoading(false);
+          console.error('GrapesJS initialization error:', error);
         }
       }, 100);
+    }).catch(error => {
+      setInitError(`Failed to load GrapesJS: ${error.message}`);
+      setIsLoading(false);
     });
     
     return () => {
-      // Cleanup on unmount
       if (timer) clearTimeout(timer);
       if (cleanupTimer) clearTimeout(cleanupTimer);
       if (editorRef.current) {
+        try {
         editorRef.current.destroy();
+        } catch (error) {
+          // Silent cleanup
+        }
         editorRef.current = null;
       }
     };
@@ -384,6 +668,53 @@ function PageBuilder() {
 
   return (
     <div className={`page-builder ${theme}`} data-theme={theme}>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="page-builder-loading">
+          <div className="loading-content">
+            <div className="loading-spinner"></div>
+            <h3>Loading Page Builder...</h3>
+            <p>Initializing GrapesJS editor</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {initError && !isLoading && (
+        <div className="page-builder-error">
+          <div className="error-content">
+            <h2>❌ Page Builder Failed to Load</h2>
+            <p className="error-message">{initError}</p>
+            <div className="error-actions">
+              <button 
+                className="btn btn-primary"
+                onClick={() => window.location.reload()}
+              >
+                🔄 Reload Page
+              </button>
+              <button 
+                className="btn btn-secondary"
+                onClick={() => {
+                  localStorage.removeItem('gjsProject');
+                  window.location.reload();
+                }}
+              >
+                🗑️ Clear Data & Reload
+              </button>
+            </div>
+            <div className="error-help">
+              <h4>Troubleshooting:</h4>
+              <ul>
+                <li>Check browser console (F12) for detailed errors</li>
+                <li>Ensure GrapesJS is installed: <code>npm install grapesjs</code></li>
+                <li>Try clearing your browser cache</li>
+                <li>Check that all block files exist in <code>blocks/</code> folder</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toolbar */}
       <PageBuilderToolbar
         projectName={projectName}
@@ -405,46 +736,27 @@ function PageBuilder() {
 
       {/* Main Editor Layout */}
       <div className="page-builder-layout">
-        {/* Left Panel - Blocks/Layers/Styles */}
+        {/* Left Panel - Blocks Only */}
         <div className="left-panel">
-          <div className="panel-tabs">
-            <button
-              className={`panel-tab ${activePanel === 'blocks' ? 'active' : ''}`}
-              onClick={() => setActivePanel('blocks')}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/>
-              </svg>
-              <span>Blocks</span>
-            </button>
-            <button
-              className={`panel-tab ${activePanel === 'layers' ? 'active' : ''}`}
-              onClick={() => setActivePanel('layers')}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-              </svg>
-              <span>Layers</span>
-            </button>
+          <div className="panel-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+            </svg>
+            <h3>Blocks</h3>
           </div>
           
           <div className="panel-content">
             <div 
               id="blocks-container" 
               style={{ 
-                display: activePanel === 'blocks' ? 'block' : 'none',
-                height: activePanel === 'blocks' ? '100%' : 'auto'
-              }} 
-            />
-            <div 
-              id="layers-container" 
-              style={{ 
-                display: activePanel === 'layers' ? 'block' : 'none',
-                height: activePanel === 'layers' ? '100%' : 'auto'
+                display: 'block',
+                height: '100%',
+                overflow: 'auto',
+                overflowY: 'auto',
+                overflowX: 'hidden'
               }} 
             />
           </div>
@@ -455,25 +767,35 @@ function PageBuilder() {
           <div id="gjs-editor" />
         </div>
 
-        {/* Right Panel - Properties */}
+        {/* Right Panel - Layers, Properties, Styles */}
         <div className="right-panel">
-          <div className="panel-header">
-            <h3>Properties</h3>
-          </div>
           <div className="properties-tabs">
             <button
-              className={`prop-tab ${activePropTab === 'properties' ? 'active' : ''}`}
-              onClick={() => setActivePropTab('properties')}
+              className={`prop-tab ${activeRightTab === 'layers' ? 'active' : ''}`}
+              onClick={() => setActiveRightTab('layers')}
+              title="Layers - View component tree"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+              <span>Layers</span>
+            </button>
+            <button
+              className={`prop-tab ${activeRightTab === 'properties' ? 'active' : ''}`}
+              onClick={() => setActiveRightTab('properties')}
+              title="Component Properties"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                 <path d="M9 9h6M9 15h6"/>
               </svg>
-              <span>Component</span>
+              <span>Properties</span>
             </button>
             <button
-              className={`prop-tab ${activePropTab === 'styles-props' ? 'active' : ''}`}
-              onClick={() => setActivePropTab('styles-props')}
+              className={`prop-tab ${activeRightTab === 'styles-props' ? 'active' : ''}`}
+              onClick={() => setActiveRightTab('styles-props')}
+              title="Style Editor"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -483,12 +805,29 @@ function PageBuilder() {
           </div>
           <div className="properties-content">
             <div 
+              id="layers-container" 
+              className={activeRightTab === 'layers' ? 'prop-tab-content active' : 'prop-tab-content'}
+              style={{ 
+                display: activeRightTab === 'layers' ? 'block' : 'none',
+                height: '100%',
+                overflow: 'auto',
+                overflowY: 'auto',
+                overflowX: 'hidden'
+              }}
+            />
+            <div 
               id="traits-container" 
-              className={activePropTab === 'properties' ? 'prop-tab-content active' : 'prop-tab-content'}
+              className={activeRightTab === 'properties' ? 'prop-tab-content active' : 'prop-tab-content'}
+              style={{ 
+                display: activeRightTab === 'properties' ? 'block' : 'none'
+              }}
             />
             <div 
               id="styles-container" 
-              className={activePropTab === 'styles-props' ? 'prop-tab-content active' : 'prop-tab-content'}
+              className={activeRightTab === 'styles-props' ? 'prop-tab-content active' : 'prop-tab-content'}
+              style={{ 
+                display: activeRightTab === 'styles-props' ? 'block' : 'none'
+              }}
             >
               {/* Selector Manager - for selecting which element/class to style */}
               <div className="selectors-wrapper">

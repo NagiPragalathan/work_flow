@@ -12,7 +12,12 @@ export const NavigationContext = createContext();
 export const useNavigation = () => {
   const context = useContext(NavigationContext);
   if (!context) {
-    throw new Error('useNavigation must be used within NavigationProvider');
+    // Return a safe fallback instead of throwing
+    console.warn('useNavigation called outside NavigationProvider, using fallback');
+    return {
+      activeTab: 'workflow',
+      navigateToBuilder: () => console.warn('Navigation not available')
+    };
   }
   return context;
 };
@@ -23,8 +28,15 @@ const ProtectedRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="app-router" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-        <div>Loading...</div>
+      <div className="app-router" style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        height: '100vh',
+        background: '#ffffff',
+        color: '#000000'
+      }}>
+        <div style={{ fontSize: '16px', fontWeight: 500 }}>Loading...</div>
       </div>
     );
   }

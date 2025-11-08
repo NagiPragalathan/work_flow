@@ -7,15 +7,16 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.views.decorators.csrf import ensure_csrf_cookie
 from django.middleware.csrf import get_token
+from django.views.decorators.csrf import csrf_exempt
 from .serializers import UserSerializer, UserRegistrationSerializer
 
 
+@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup(request):
-    """User registration endpoint"""
+    """User registration endpoint - CSRF exempt for registration"""
     try:
         # Handle both snake_case and camelCase field names
         data = request.data.copy()
@@ -66,10 +67,11 @@ def signup(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signin(request):
-    """User login endpoint"""
+    """User login endpoint - CSRF exempt for login"""
     username = request.data.get('username')
     password = request.data.get('password')
     
@@ -82,10 +84,15 @@ def signin(request):
     
     if user is not None:
         login(request, user)
-        return Response({
+        # Get CSRF token for the response (for subsequent requests)
+        csrf_token = get_token(request)
+        response = Response({
             'user': UserSerializer(user).data,
             'message': 'Login successful'
         }, status=status.HTTP_200_OK)
+        # Include CSRF token in response header
+        response['X-CSRFToken'] = csrf_token
+        return response
     else:
         return Response({
             'error': 'Invalid username or password'
@@ -144,4 +151,3 @@ def get_csrf_token(request):
     }, status=status.HTTP_200_OK)
     response['X-CSRFToken'] = csrf_token
     return response
-

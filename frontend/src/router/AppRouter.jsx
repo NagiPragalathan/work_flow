@@ -22,7 +22,7 @@ export const useNavigation = () => {
   return context;
 };
 
-// Protected Route Component
+// Protected Route Component - redirects to login if not authenticated
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
@@ -48,6 +48,32 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Public Route Component - redirects to home if already authenticated
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="app-router" style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        height: '100vh',
+        background: '#ffffff',
+        color: '#000000'
+      }}>
+        <div style={{ fontSize: '16px', fontWeight: 500 }}>Loading...</div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
 function AppRouter() {
   const [activeTab, setActiveTab] = useState(() => {
     // Load active tab from localStorage
@@ -66,16 +92,30 @@ function AppRouter() {
   return (
     <NavigationContext.Provider value={{ activeTab, navigateToBuilder }}>
       <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        {/* Public routes - redirect to home if already logged in */}
+        <Route 
+          path="/login" 
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          } 
+        />
+        <Route 
+          path="/signup" 
+          element={
+            <PublicRoute>
+              <Signup />
+            </PublicRoute>
+          } 
+        />
         
-        {/* Protected routes */}
+        {/* Protected routes - redirect to login if not authenticated */}
         <Route
           path="/"
           element={
             <ProtectedRoute>
-              <div className="app-router">
+              <div className="app-router" style={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
                 {activeTab === 'workflow' && <WorkflowBuilder />}
                 {activeTab === 'page-builder' && <PageBuilder />}
               </div>

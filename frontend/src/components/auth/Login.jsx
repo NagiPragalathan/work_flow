@@ -17,6 +17,21 @@ const Login = () => {
     setLoading(true);
 
     try {
+      // Ensure CSRF token is fetched before signin
+      const apiService = (await import('../../services/api')).default;
+      let csrfToken = apiService.getCsrfToken();
+      if (!csrfToken || typeof csrfToken !== 'string') {
+        console.log('Fetching CSRF token before signin...');
+        try {
+          csrfToken = await apiService.fetchCsrfToken();
+          // Wait a bit to ensure cookie is set
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } catch (csrfError) {
+          console.warn('CSRF token fetch failed, proceeding anyway:', csrfError);
+          // Continue with signin even if CSRF fetch fails
+        }
+      }
+      
       const result = await signin(username, password);
       if (result.success) {
         navigate('/');
@@ -24,7 +39,8 @@ const Login = () => {
         setError(result.error || 'Invalid username or password');
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      console.error('Login error:', err);
+      setError(err.message || 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

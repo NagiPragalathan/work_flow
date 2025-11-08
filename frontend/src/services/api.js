@@ -17,8 +17,9 @@ class ApiService {
     for (let cookie of cookies) {
       const [key, value] = cookie.trim().split('=');
       if (key === name && value) {
-        console.log('CSRF token found in cookies');
-        return decodeURIComponent(value);
+        const token = decodeURIComponent(value);
+        console.log('CSRF token found in cookies:', token.substring(0, 10) + '...');
+        return token;
       }
     }
     console.log('CSRF token not found in cookies');
@@ -35,32 +36,65 @@ class ApiService {
         credentials: 'include',
       });
       
+      if (!response.ok) {
+        // If endpoint doesn't exist (404), try to get from cookies
+        if (response.status === 404) {
+          console.warn('CSRF token endpoint not found (404), trying cookies...');
+          const cookieToken = this.getCsrfToken();
+          if (cookieToken) {
+            return cookieToken;
+          }
+          // Try check-auth endpoint as fallback
+          try {
+            const checkResponse = await fetch(`${this.baseURL}/auth/check/`, {
+              method: 'GET',
+              credentials: 'include',
+            });
+            if (checkResponse.ok) {
+              const checkToken = checkResponse.headers.get('X-CSRFToken');
+              if (checkToken) {
+                return checkToken;
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to get CSRF from check-auth:', e);
+          }
+          return null;
+        }
+        throw new Error(`Failed to fetch CSRF token: ${response.status}`);
+      }
+      
       // CSRF token might be in response header or body
       let csrfToken = response.headers.get('X-CSRFToken');
       if (!csrfToken) {
         try {
           const data = await response.json();
-          csrfToken = data.csrfToken;
+          csrfToken = data.csrfToken || data.csrf_token;
         } catch (e) {
           // Ignore JSON parse error
         }
       }
       
       // Wait a bit for cookie to be set by browser
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
       // Always try to get from cookies after fetching (most reliable)
       const cookieToken = this.getCsrfToken();
-      if (cookieToken) {
+      if (cookieToken && typeof cookieToken === 'string') {
         csrfToken = cookieToken;
       }
       
-      console.log('CSRF token fetched:', csrfToken ? 'Token available' : 'No token');
-      return csrfToken;
+      console.log('CSRF token fetched:', csrfToken && typeof csrfToken === 'string' ? 'Token available' : 'No token');
+      return csrfToken && typeof csrfToken === 'string' ? csrfToken : null;
     } catch (error) {
       console.warn('Failed to fetch CSRF token:', error);
       // Try to get from cookies as fallback
-      return this.getCsrfToken();
+      const cookieToken = this.getCsrfToken();
+      if (cookieToken && typeof cookieToken === 'string') {
+        console.log('Using CSRF token from cookies');
+        return cookieToken;
+      }
+      return null;
     }
   }
 
@@ -85,14 +119,14 @@ class ApiService {
           csrfToken = this.getCsrfToken();
         }
       }
-      if (csrfToken) {
+      if (csrfToken && typeof csrfToken === 'string') {
         // Django expects X-CSRFTOKEN (all caps) based on CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
-        // The HTTP_ prefix is added automatically by Django
+        // The HTTP_ prefix is added automatically by Django, so we send X-CSRFTOKEN
         headers['X-CSRFTOKEN'] = csrfToken;
         headers['X-CSRFToken'] = csrfToken; // Also try alternative for compatibility
-        console.log('Adding CSRF token to headers');
+        console.log('Adding CSRF token to headers:', csrfToken.length > 10 ? csrfToken.substring(0, 10) + '...' : csrfToken);
       } else {
-        console.warn('No CSRF token available for', method, 'request');
+        console.warn('No CSRF token available for', method, 'request', 'Token type:', typeof csrfToken);
       }
     }
     
@@ -144,15 +178,37 @@ class ApiService {
       // Handle 403 Forbidden - CSRF token issue
       if (response.status === 403) {
         // Try to get CSRF token and retry once
+        console.log('403 Forbidden - attempting to fetch CSRF token and retry...');
         const csrfToken = await this.fetchCsrfToken();
-        if (csrfToken && method !== 'GET') {
+        if (csrfToken && typeof csrfToken === 'string' && method !== 'GET') {
           console.log('Retrying request with CSRF token...');
+          // Wait a bit to ensure cookie is set
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
           // Retry the request with CSRF token (Django expects X-CSRFTOKEN)
-          config.headers['X-CSRFTOKEN'] = csrfToken;
-          config.headers['X-CSRFToken'] = csrfToken; // Also try alternative
+          if (csrfToken && typeof csrfToken === 'string') {
+            config.headers['X-CSRFTOKEN'] = csrfToken;
+            config.headers['X-CSRFToken'] = csrfToken; // Also try alternative
+          }
+          
           const retryResponse = await fetch(url, config);
           if (retryResponse.ok) {
             return await retryResponse.json();
+          }
+          
+          // If still failing, try one more time with fresh token
+          if (retryResponse.status === 403) {
+            console.log('Second retry with fresh CSRF token...');
+            const freshToken = await this.fetchCsrfToken();
+            if (freshToken && typeof freshToken === 'string') {
+              await new Promise(resolve => setTimeout(resolve, 200));
+              config.headers['X-CSRFTOKEN'] = freshToken;
+              config.headers['X-CSRFToken'] = freshToken;
+              const finalResponse = await fetch(url, config);
+              if (finalResponse.ok) {
+                return await finalResponse.json();
+              }
+            }
           }
         }
         const errorData = await response.json().catch(() => ({ error: 'CSRF verification failed' }));
@@ -189,6 +245,25 @@ class ApiService {
   }
 
   async signin(credentials) {
+    // Ensure CSRF token is fetched before signin
+    let csrfToken = this.getCsrfToken();
+    if (!csrfToken || typeof csrfToken !== 'string') {
+      console.log('Fetching CSRF token before signin...');
+      csrfToken = await this.fetchCsrfToken();
+      // Wait a bit more to ensure cookie is set
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // If still no token, try one more time from cookies
+      if (!csrfToken || typeof csrfToken !== 'string') {
+        csrfToken = this.getCsrfToken();
+      }
+    }
+    
+    // If we still don't have a token, proceed anyway - Django might accept it
+    if (!csrfToken || typeof csrfToken !== 'string') {
+      console.warn('No CSRF token available, proceeding with signin request...');
+    }
+    
     return this.request('/auth/signin/', {
       method: 'POST',
       body: JSON.stringify(credentials),

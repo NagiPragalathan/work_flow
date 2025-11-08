@@ -50,10 +50,18 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'workflows.csrf_middleware.CSRFExemptMiddleware',  # Custom CSRF exemption
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+# CSRF exemption for login/signup endpoints
+# Patterns to match - use simpler patterns that will definitely match
+CSRF_EXEMPT_URLS = [
+    r'.*signin.*',  # Match any path containing 'signin'
+    r'.*signup.*',  # Match any path containing 'signup'
 ]
 
 # Ensure CSRF cookie is set for all views
@@ -148,6 +156,10 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 100,
+    # Disable CSRF for API views (we handle it manually for login/signup)
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
 }
 
 # Allow AI chat endpoint to be accessed without authentication

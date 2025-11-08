@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTheme } from '../../theme';
+import { useNavigation } from '../../router/AppRouter';
 import PageBuilderToolbar from './PageBuilderToolbar';
 import WidgetImportModal from './WidgetImportModal';
 import CodeExportModal from './CodeExportModal';
@@ -25,7 +26,8 @@ const loadGrapesJS = async () => {
 };
 
 function PageBuilder() {
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
+  const { navigateToBuilder } = useNavigation();
   const editorRef = useRef(null);
   const [editor, setEditor] = useState(null);
   const [projectName, setProjectName] = useState('Untitled Project');

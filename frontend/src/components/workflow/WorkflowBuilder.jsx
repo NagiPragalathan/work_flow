@@ -35,6 +35,8 @@ import { nodeTypeDefinitions } from '../../nodeTypes.jsx';
 import { executionEngine } from '../../executionEngine';
 import { workflowApi } from '../../api/workflowApi';
 import { useTheme } from '../../theme.jsx';
+import { useNavigation } from '../../router/AppRouter';
+import { FiLayout } from 'react-icons/fi';
 import NotesNode from './NotesNode';
 import READMEViewerNode from './READMEViewerNode';
 import '../../App.css';
@@ -46,6 +48,7 @@ const initialEdges = [];
 
 function WorkflowBuilder() {
   const { theme, toggleTheme } = useTheme();
+  const { navigateToBuilder } = useNavigation();
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
 
@@ -1801,7 +1804,24 @@ function WorkflowBuilder() {
             >
               <FiMenu />
             </button>
-            <h1 className="app-title">Workflow Builder</h1>
+            {/* Navigation Tabs */}
+            <div className="builder-nav-tabs">
+              <button
+                className="builder-nav-tab active"
+                title="Workflow Builder"
+              >
+                <FiGrid />
+                <span>Workflow Builder</span>
+              </button>
+              <button
+                className="builder-nav-tab"
+                onClick={() => navigateToBuilder('page-builder')}
+                title="Page Builder"
+              >
+                <FiLayout />
+                <span>Page Builder</span>
+              </button>
+            </div>
           </div>
 
           <div className="toolbar-center">

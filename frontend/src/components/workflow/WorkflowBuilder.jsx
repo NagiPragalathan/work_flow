@@ -27,6 +27,7 @@ import {
   ToastContainer,
   VerticalToolbar
 } from '../';
+import NodeSettingsModal from './NodeSettingsModal';
 import AIChatbot from '../ui/AIChatbot';
 import SettingsModal from '../ui/SettingsModal';
 import ExportModal from '../ui/ExportModal';
@@ -70,6 +71,8 @@ function WorkflowBuilder() {
     return types;
   }, []); // Empty dependency array since nodeTypeDefinitions and components don't change
   const [selectedNodeForSettings, setSelectedNodeForSettings] = useState(null);
+  const [nodeSettingsModalOpen, setNodeSettingsModalOpen] = useState(false);
+  const [selectedNodeForModal, setSelectedNodeForModal] = useState(null);
   const [libraryOpen, setLibraryOpen] = useState(true);
   const [execution, setExecution] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -607,18 +610,14 @@ function WorkflowBuilder() {
 
         const createdWorkflow = await createResponse.json();
 
-        // Execute the test workflow
-        const response = await fetch(`/api/workflows/${createdWorkflow.id}/execute/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            trigger_data: { message: 'test api key from agent flow' },
-            credentials: {}
-          })
-        });
+        // Execute the test workflow using workflowApi (handles CSRF)
+        const result = await workflowApi.executeWorkflow(
+          createdWorkflow.id,
+          { message: 'test api key from agent flow' },
+          {}
+        );
 
-        if (response.ok) {
-          const result = await response.json();
+        if (result) {
           const endTime = new Date();
           
           console.log('🔍 Full backend response:', result);
@@ -959,21 +958,12 @@ function WorkflowBuilder() {
       });
     }
 
-    // Execute workflow with chat message
-    const response = await fetch(`/api/workflows/${workflowId}/execute/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        trigger_data: { message: message, text: message },
-        credentials: {}
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Workflow execution failed: ${response.status}`);
-    }
-
-    const result = await response.json();
+    // Execute workflow with chat message using workflowApi (handles CSRF)
+    const result = await workflowApi.executeWorkflow(
+      workflowId, 
+      { message: message, text: message }, 
+      {}
+    );
     
     console.log('🔍 Full workflow execution result:', result);
     console.log('🔍 Execution node states:', result.execution?.node_states);
@@ -1548,20 +1538,10 @@ function WorkflowBuilder() {
       const executionStartTime = Date.now();
       
       try {
-        const response = await fetch(`/api/workflows/${workflowId}/execute/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            trigger_data: { text: 'Manual trigger execution' },
-            credentials: {}
-          })
-        });
+        // Use workflowApi which handles CSRF tokens
+        const result = await workflowApi.executeWorkflow(workflowId, { text: 'Manual trigger execution' }, {});
 
-        if (!response.ok) {
-          throw new Error(`Execution failed: ${response.status}`);
-        }
-
-        const result = await response.json();
+        // Result is already parsed by workflowApi
         
         // Process node states with animations
         if (result.execution && result.execution.node_states) {
@@ -2354,6 +2334,12 @@ function WorkflowBuilder() {
                 deleteNode(node.id);
               }
             }}
+            onNodeDoubleClick={(event, node) => {
+              // Open node settings modal on double click
+              event.preventDefault();
+              setSelectedNodeForModal(node);
+              setNodeSettingsModalOpen(true);
+            }}
           >
             <Background variant="dots" gap={16} size={1} />
             <Controls />
@@ -2374,6 +2360,20 @@ function WorkflowBuilder() {
           node={selectedNodeForSettings}
           onUpdate={updateNodeData}
           onClose={() => setSelectedNodeForSettings(null)}
+        />
+      )}
+
+      {nodeSettingsModalOpen && selectedNodeForModal && (
+        <NodeSettingsModal
+          node={selectedNodeForModal}
+          nodes={nodes}
+          edges={edges}
+          onUpdate={updateNodeData}
+          onClose={() => {
+            setNodeSettingsModalOpen(false);
+            setSelectedNodeForModal(null);
+          }}
+          onExecuteNode={handleExecutionClick}
         />
       )}
 

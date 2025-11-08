@@ -11,8 +11,14 @@ import {
   FiMonitor,
   FiTablet,
   FiSmartphone,
-  FiFolder
+  FiFolder,
+  FiGrid,
+  FiLayout,
+  FiSun,
+  FiMoon
 } from 'react-icons/fi';
+import { useTheme } from '../../theme';
+import { useNavigation } from '../../router/AppRouter';
 import './PageBuilderToolbar.css';
 
 function PageBuilderToolbar({
@@ -32,6 +38,8 @@ function PageBuilderToolbar({
   hasChanges,
   isPreviewMode
 }) {
+  const { theme, toggleTheme } = useTheme();
+  const { navigateToBuilder } = useNavigation();
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(projectName);
 
@@ -55,8 +63,27 @@ function PageBuilderToolbar({
 
   return (
     <div className="page-builder-toolbar">
-      {/* Left Section - Project Name */}
+      {/* Left Section - Navigation Tabs & Project Name */}
       <div className="toolbar-section toolbar-left">
+        {/* Navigation Tabs */}
+        <div className="builder-nav-tabs">
+          <button
+            className="builder-nav-tab"
+            onClick={() => navigateToBuilder('workflow')}
+            title="Workflow Builder"
+          >
+            <FiGrid />
+            <span>Workflow Builder</span>
+          </button>
+          <button
+            className="builder-nav-tab active"
+            title="Page Builder"
+          >
+            <FiLayout />
+            <span>Page Builder</span>
+          </button>
+        </div>
+        
         {isEditingName ? (
           <input
             type="text"
@@ -157,6 +184,15 @@ function PageBuilderToolbar({
           </button>
 
           <div className="toolbar-divider" />
+
+          {/* Theme Toggle */}
+          <button 
+            className="toolbar-btn icon-only" 
+            onClick={toggleTheme} 
+            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          >
+            {theme === 'light' ? <FiMoon /> : <FiSun />}
+          </button>
 
           {/* Save */}
           <button

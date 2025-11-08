@@ -507,6 +507,50 @@
   gap: 12px;
 }
 
+/* Builder Navigation Tabs */
+.builder-nav-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-right: 12px;
+}
+
+.builder-nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--textSecondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.builder-nav-tab:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.builder-nav-tab.active {
+  background: var(--background);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 3px var(--shadow);
+}
+
+.builder-nav-tab svg {
+  width: 16px;
+  height: 16px;
+}
+
 .toolbar-center {
   flex: 1;
   justify-content: center;

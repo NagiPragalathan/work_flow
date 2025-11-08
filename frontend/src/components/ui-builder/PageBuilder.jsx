@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import grapesjs from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
 import { useTheme } from '../../theme';
+import { useNavigation } from '../../router/AppRouter';
+import { FiGrid, FiLayout, FiSun, FiMoon } from 'react-icons/fi';
 import { getGrapesConfig } from './grapesConfig';
 import PageBuilderToolbar from './PageBuilderToolbar';
 import WidgetImportModal from './WidgetImportModal';
@@ -10,7 +12,8 @@ import ProjectManager from './ProjectManager';
 import './PageBuilder.css';
 
 function PageBuilder() {
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
+  const { navigateToBuilder } = useNavigation();
   const editorRef = useRef(null);
   const [editor, setEditor] = useState(null);
   const [projectName, setProjectName] = useState('Untitled Project');

@@ -1,9 +1,16 @@
+.app-router {
+  width: 100vw;
+  height: 100vh;
+  background: #ffffff !important;
+  overflow: hidden;
+}
+
 .app {
   width: 100vw;
   height: 100vh;
   display: flex;
   overflow: hidden;
-  background: var(--background);
+  background: #ffffff !important; /* White background as requested */
   position: relative;
   margin: 0;
   padding: 0;
@@ -245,6 +252,7 @@
   flex-direction: column;
   transition: margin-left 0.3s ease, margin-right 0.3s ease, height 0.3s ease, width 0.3s ease;
   position: relative;
+  background: #ffffff !important; /* White background */
   height: calc(100vh - var(--logs-height));
   min-height: 400px;
   width: 100%;
@@ -324,32 +332,50 @@
 
 .header-tabs {
   display: flex;
-  gap: 4px;
-  background: var(--background);
-  border-radius: 6px;
+  gap: 0;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
   padding: 4px;
+  overflow: hidden;
 }
 
 .header-tab {
-  padding: 8px 16px;
-  background: transparent;
+  padding: 10px 20px;
+  background: #000000;
   border: none;
-  color: var(--textSecondary);
+  color: #ffffff;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
 }
 
 .header-tab:hover {
-  background: var(--hover);
-  color: var(--text);
+  background: #1a1a1a;
+  color: #ffffff;
 }
 
 .header-tab.active {
-  background: var(--primary);
-  color: white;
+  background: #2a2a2a;
+  color: #ffffff;
+}
+
+.header-tab.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 16px;
+  background: #ffffff;
+  border-radius: 2px;
 }
 
 .header-right {
@@ -1156,7 +1182,7 @@ button.toolbar-btn.primary svg {
 .workflow-canvas {
   flex: 1;
   position: relative;
-  background: var(--background);
+  background: #ffffff !important; /* White background */
   height: calc(100vh - 60px - var(--logs-height)); /* Account for toolbar (60px) + logs bar */
   width: 100%;
   min-height: 400px;

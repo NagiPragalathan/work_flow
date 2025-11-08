@@ -10,11 +10,16 @@
   },
   "dependencies": {
     "@xyflow/react": "^12.3.2",
+    "grapesjs": "^0.22.13",
+    "grapesjs-plugin-export": "^1.0.12",
+    "grapesjs-preset-webpage": "^1.0.3",
     "lucide-react": "^0.263.1",
+    "prismjs": "^1.30.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^4.12.0",
     "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.9.5",
     "react-syntax-highlighter": "^15.6.6",
     "remark-gfm": "^4.0.1"
   },

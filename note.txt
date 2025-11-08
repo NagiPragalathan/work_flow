@@ -1,0 +1,8 @@
+ambuka kasam kasam 
+
+@App.jsx (1-2036) use graph js aand make the editor to make the ui to make ity drag and drop to build.. in that exsiting code here  add it i should craete te ui using drag and drop.. https://github.com/graphjs/graphjs , https://graphjs.com/ .. it should be contain drag and drop and make it mordern ui.. The UI is not good make it more good also give me th eoption to import the external ui to convert it as a widget then by using drag and drop i should can be add it.. also the html first show it in the popup like which is already into default graph js it should be moree good i need good morddern ui with the responsive builder like wordpress make it more good.. thye ui should be more good for editor too!.. . it shouyld have the all of thee features wwhich is shown in the ui of that official page make that web builder responsive and should have all of the features drag and drop from widgests also export code ect i need eacyh and every features..!
+
+
+
+refer following code too
+@builder-html.html (1-4500) 

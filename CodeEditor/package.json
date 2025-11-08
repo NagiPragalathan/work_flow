@@ -1,0 +1,22 @@
+{
+  "name": "ai-code-editor",
+  "version": "1.0.0",
+  "description": "AI-powered code editor using LangChain and Groq",
+  "scripts": {
+    "setup": "cd backend && python -m venv venv && cd ../frontend && npm install",
+    "backend": "cd backend && python main.py",
+    "frontend": "cd frontend && npm run dev",
+    "test": "cd backend && python test_agent.py"
+  },
+  "keywords": [
+    "ai",
+    "code-editor",
+    "langchain",
+    "groq",
+    "react",
+    "fastapi"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+

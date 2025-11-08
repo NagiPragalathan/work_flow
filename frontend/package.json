@@ -9,10 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@grapesjs/studio-sdk": "^1.0.56",
+    "@grapesjs/studio-sdk-plugins": "^1.0.29",
     "@xyflow/react": "^12.3.2",
-    "grapesjs": "^0.22.13",
-    "grapesjs-plugin-export": "^1.0.12",
-    "grapesjs-preset-webpage": "^1.0.3",
     "lucide-react": "^0.263.1",
     "prismjs": "^1.30.0",
     "react": "^18.3.1",

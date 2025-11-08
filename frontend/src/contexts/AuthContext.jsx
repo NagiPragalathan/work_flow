@@ -16,9 +16,25 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check authentication status on mount
+  // Check authentication status on mount and get CSRF token
   useEffect(() => {
-    checkAuthStatus();
+    // First get CSRF token, then check auth
+    const initialize = async () => {
+      try {
+        // Fetch CSRF token first to ensure cookie is set
+        await fetch(`${apiService.baseURL}/auth/csrf-token/`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        // Then check actual auth status
+        await checkAuthStatus();
+      } catch (error) {
+        console.warn('Failed to initialize auth:', error);
+        // Still try to check auth status
+        checkAuthStatus();
+      }
+    };
+    initialize();
   }, []);
 
   const checkAuthStatus = async () => {

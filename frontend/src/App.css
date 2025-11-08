@@ -3959,6 +3959,375 @@ button.toolbar-btn.primary svg {
   opacity: 0.5;
 }
 
+/* Node Settings Modal Styles */
+.node-settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.node-settings-modal {
+  width: 95vw;
+  height: 95vh;
+  background: #1a1a1a;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.node-settings-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: #2a2a2a;
+  border-bottom: 1px solid #333;
+}
+
+.back-to-canvas-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.back-to-canvas-btn:hover {
+  background: #333;
+}
+
+.node-settings-trial-info {
+  display: flex;
+  gap: 20px;
+  color: #999;
+  font-size: 12px;
+}
+
+.upgrade-btn {
+  background: #8b5cf6;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.node-settings-close-btn {
+  background: transparent;
+  border: 1px solid #444;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.node-settings-close-btn:hover {
+  background: #333;
+  border-color: #555;
+}
+
+.node-settings-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.node-settings-column {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #333;
+  overflow: hidden;
+}
+
+.node-settings-input {
+  width: 300px;
+  flex-shrink: 0;
+}
+
+.node-settings-center {
+  flex: 1;
+  min-width: 0;
+}
+
+.node-settings-output {
+  width: 300px;
+  flex-shrink: 0;
+  border-right: none;
+}
+
+.node-settings-column-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #222;
+}
+
+.node-settings-column-header h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.node-settings-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.node-settings-title .node-icon {
+  font-size: 20px;
+}
+
+.node-settings-title h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.execute-step-btn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.execute-step-btn:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.execute-step-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.node-settings-tabs {
+  display: flex;
+  border-bottom: 1px solid #333;
+  background: #222;
+}
+
+.node-settings-tab {
+  background: none;
+  border: none;
+  color: #999;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.node-settings-tab:hover {
+  color: #fff;
+  background: #2a2a2a;
+}
+
+.node-settings-tab.active {
+  color: #8b5cf6;
+  border-bottom-color: #8b5cf6;
+  background: #1a1a1a;
+}
+
+.node-settings-column-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background: #1a1a1a;
+}
+
+.node-settings-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  text-align: center;
+  gap: 12px;
+}
+
+.node-settings-empty-state p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.execute-previous-btn,
+.execute-trigger-btn {
+  background: #8b5cf6;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.execute-previous-btn:hover:not(:disabled),
+.execute-trigger-btn:hover:not(:disabled) {
+  background: #7c3aed;
+}
+
+.execute-previous-btn:disabled,
+.execute-trigger-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.node-settings-empty-state small {
+  font-size: 12px;
+  color: #555;
+}
+
+.node-settings-input-data {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-source-item {
+  padding: 8px 12px;
+  background: #222;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.source-label {
+  color: #fff;
+  font-size: 14px;
+}
+
+.source-handle {
+  color: #999;
+  font-size: 12px;
+}
+
+.node-settings-properties {
+  /* PropertyPanel will be rendered here */
+}
+
+.node-settings-properties .property-panel {
+  position: relative;
+  width: 100%;
+  height: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.node-settings-properties .panel-header {
+  display: none; /* Hide PropertyPanel header in modal */
+}
+
+.node-settings-properties .panel-body {
+  padding: 0;
+}
+
+.output-data-display {
+  background: #222;
+  padding: 16px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  overflow-x: auto;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.mock-data-hint {
+  font-size: 12px;
+  color: #666;
+}
+
+.mock-link {
+  color: #8b5cf6;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.edit-mock-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-mock-btn:hover {
+  color: #fff;
+}
+
+.trigger-execute-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+}
+
+.trigger-description {
+  color: #999;
+  font-size: 14px;
+  margin: 0;
+}
+
 /* Ensure proper node rendering */
 .react-flow__node-default {
   background: transparent !important;

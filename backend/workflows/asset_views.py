@@ -3,7 +3,7 @@ Views for handling UI Builder asset uploads (images, files)
 """
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])  # Allow unauthenticated uploads for now
 def upload_asset(request):
     """Upload an asset (image, file) for UI Builder"""
     try:
@@ -49,8 +49,9 @@ def upload_asset(request):
             safe_original = safe_original.replace(' ', '_')
             filename = f"{safe_original}_{uuid.uuid4().hex[:8]}{file_ext}"
         
-        # Create user-specific directory
-        user_dir = f"ui_assets/user_{request.user.id}"
+        # Create user-specific directory (use guest if not authenticated)
+        user_id = request.user.id if request.user.is_authenticated else 'guest'
+        user_dir = f"ui_assets/user_{user_id}"
         filepath = os.path.join(user_dir, filename)
         
         # Save file
@@ -73,11 +74,12 @@ def upload_asset(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])  # Allow unauthenticated access
 def list_assets(request):
     """List all assets for the current user"""
     try:
-        user_dir = f"ui_assets/user_{request.user.id}"
+        user_id = request.user.id if request.user.is_authenticated else 'guest'
+        user_dir = f"ui_assets/user_{user_id}"
         
         # List files in user directory
         assets = []
@@ -107,11 +109,12 @@ def list_assets(request):
 
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])  # Allow unauthenticated access
 def delete_asset(request, filename):
     """Delete an asset"""
     try:
-        user_dir = f"ui_assets/user_{request.user.id}"
+        user_id = request.user.id if request.user.is_authenticated else 'guest'
+        user_dir = f"ui_assets/user_{user_id}"
         filepath = os.path.join(user_dir, filename)
         
         if not default_storage.exists(filepath):

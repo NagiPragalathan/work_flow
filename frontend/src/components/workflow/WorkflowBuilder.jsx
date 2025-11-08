@@ -18,7 +18,6 @@ import {
 import {
   WorkflowNode,
   NodeLibrary,
-  PropertyPanel,
   ChatBox,
   ExecutionViewer,
   ExecutionStatusBar,
@@ -40,6 +39,7 @@ import { useNavigation } from '../../router/AppRouter';
 import { FiLayout } from 'react-icons/fi';
 import NotesNode from './NotesNode';
 import READMEViewerNode from './READMEViewerNode';
+import NodeSettingsModal from "../ui/NodeSettingsModal.jsx";
 import '../../App.css';
 
 // Node types will be defined inside the component

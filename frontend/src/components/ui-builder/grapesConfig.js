@@ -1,6 +1,6 @@
 // GrapesJS Configuration
 
-import { allBlocks } from './blocks';
+import { simpleBlocks } from './blocks/simpleBlocks';
 
 export const getGrapesConfig = (theme) => {
   const isDark = theme === 'dark';
@@ -28,46 +28,43 @@ export const getGrapesConfig = (theme) => {
     
     // Canvas settings
     canvas: {
-      styles: [
-        // Add Tailwind CSS CDN (will be conditionally loaded)
-        // External styles will be injected dynamically via widget import
-      ],
-      scripts: [
-        // External scripts will be injected dynamically via widget import
-      ]
+      styles: [],
+      scripts: []
     },
     
-    // Panels configuration
+    // Allow drop on canvas
+    allowDrop: true,
+    
+    // Component defaults
+    domComponents: {
+      defaults: {
+        editable: true,
+        droppable: true,
+        draggable: true,
+        selectable: true,
+        hoverable: true,
+        highlightable: true,
+        copyable: true,
+        removable: true,
+        resizable: {
+          tl: 1,
+          tc: 1,
+          tr: 1,
+          cl: 1,
+          cr: 1,
+          bl: 1,
+          bc: 1,
+          br: 1
+        },
+        badgable: true,
+        stylable: true,
+        traits: ['id', 'title', 'alt', 'href', 'target', 'rel']
+      }
+    },
+    
+    // Panels configuration - disabled (using custom UI)
     panels: {
-      defaults: [
-        {
-          id: 'panel-switcher',
-          el: '.panel__switcher',
-          buttons: [
-            {
-              id: 'show-blocks',
-              active: true,
-              label: 'Blocks',
-              command: 'show-blocks',
-              togglable: false
-            },
-            {
-              id: 'show-layers',
-              active: false,
-              label: 'Layers',
-              command: 'show-layers',
-              togglable: false
-            },
-            {
-              id: 'show-style',
-              active: false,
-              label: 'Styles',
-              command: 'show-styles',
-              togglable: false
-            }
-          ]
-        }
-      ]
+      defaults: []
     },
     
     // Device Manager
@@ -93,7 +90,7 @@ export const getGrapesConfig = (theme) => {
     // Block Manager
     blockManager: {
       appendTo: '#blocks-container',
-      blocks: allBlocks
+      blocks: simpleBlocks
     },
     
     // Layer Manager
@@ -119,14 +116,14 @@ export const getGrapesConfig = (theme) => {
       appendTo: '#styles-sectors-container',
       sectors: [
         {
-          name: 'General',
+          name: 'Layout',
           open: true,
-          buildProps: ['display', 'position', 'top', 'right', 'left', 'bottom']
+          buildProps: ['display', 'position', 'top', 'right', 'left', 'bottom', 'float', 'clear', 'overflow', 'overflow-x', 'overflow-y']
         },
         {
           name: 'Dimension',
           open: false,
-          buildProps: ['width', 'height', 'max-width', 'min-width', 'max-height', 'min-height', 'padding', 'margin'],
+          buildProps: ['width', 'height', 'max-width', 'min-width', 'max-height', 'min-height', 'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left', 'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left'],
           properties: [
             {
               type: 'number',
@@ -151,18 +148,27 @@ export const getGrapesConfig = (theme) => {
             'font-family',
             'font-size',
             'font-weight',
+            'font-style',
             'letter-spacing',
             'color',
             'line-height',
             'text-align',
             'text-decoration',
-            'text-shadow'
+            'text-transform',
+            'text-shadow',
+            'word-spacing',
+            'white-space'
           ],
           properties: [
             {
               property: 'font-family',
               type: 'select',
               options: [
+                { value: 'Inter, system-ui, sans-serif', name: 'Inter' },
+                { value: 'Roboto, sans-serif', name: 'Roboto' },
+                { value: 'Open Sans, sans-serif', name: 'Open Sans' },
+                { value: 'Lato, sans-serif', name: 'Lato' },
+                { value: 'Montserrat, sans-serif', name: 'Montserrat' },
                 { value: 'Arial, sans-serif', name: 'Arial' },
                 { value: 'Helvetica, sans-serif', name: 'Helvetica' },
                 { value: 'Georgia, serif', name: 'Georgia' },
@@ -174,7 +180,7 @@ export const getGrapesConfig = (theme) => {
             {
               property: 'font-size',
               type: 'number',
-              units: ['px', 'em', 'rem', '%'],
+              units: ['px', 'em', 'rem', '%', 'vh', 'vw'],
               defaults: '16px',
               min: 0
             },
@@ -183,27 +189,63 @@ export const getGrapesConfig = (theme) => {
               type: 'select',
               options: [
                 { value: '100', name: 'Thin' },
+                { value: '200', name: 'Extra Light' },
                 { value: '300', name: 'Light' },
                 { value: '400', name: 'Normal' },
                 { value: '500', name: 'Medium' },
                 { value: '600', name: 'Semi-bold' },
                 { value: '700', name: 'Bold' },
+                { value: '800', name: 'Extra Bold' },
                 { value: '900', name: 'Black' }
               ],
               defaults: '400'
+            },
+            {
+              property: 'text-align',
+              type: 'select',
+              options: [
+                { value: 'left', name: 'Left' },
+                { value: 'center', name: 'Center' },
+                { value: 'right', name: 'Right' },
+                { value: 'justify', name: 'Justify' }
+              ]
             }
           ]
         },
         {
-          name: 'Decorations',
+          name: 'Background',
           open: false,
           buildProps: [
             'background-color',
             'background',
+            'background-image',
+            'background-repeat',
+            'background-position',
+            'background-attachment',
+            'background-size'
+          ]
+        },
+        {
+          name: 'Border',
+          open: false,
+          buildProps: [
             'border-radius',
             'border',
+            'border-width',
+            'border-style',
+            'border-color',
+            'border-top',
+            'border-right',
+            'border-bottom',
+            'border-left'
+          ]
+        },
+        {
+          name: 'Shadow',
+          open: false,
+          buildProps: [
             'box-shadow',
-            'background-image'
+            'text-shadow'
           ]
         },
         {
@@ -220,13 +262,79 @@ export const getGrapesConfig = (theme) => {
             'flex-grow',
             'flex-shrink',
             'align-self',
-            'gap'
+            'gap',
+            'row-gap',
+            'column-gap'
+          ],
+          properties: [
+            {
+              property: 'justify-content',
+              type: 'select',
+              options: [
+                { value: 'flex-start', name: 'Start' },
+                { value: 'flex-end', name: 'End' },
+                { value: 'center', name: 'Center' },
+                { value: 'space-between', name: 'Space Between' },
+                { value: 'space-around', name: 'Space Around' },
+                { value: 'space-evenly', name: 'Space Evenly' }
+              ]
+            },
+            {
+              property: 'align-items',
+              type: 'select',
+              options: [
+                { value: 'flex-start', name: 'Start' },
+                { value: 'flex-end', name: 'End' },
+                { value: 'center', name: 'Center' },
+                { value: 'baseline', name: 'Baseline' },
+                { value: 'stretch', name: 'Stretch' }
+              ]
+            }
+          ]
+        },
+        {
+          name: 'Grid',
+          open: false,
+          buildProps: [
+            'grid-template-columns',
+            'grid-template-rows',
+            'grid-column-gap',
+            'grid-row-gap',
+            'grid-gap',
+            'justify-items',
+            'align-items',
+            'place-items'
+          ]
+        },
+        {
+          name: 'Effects',
+          open: false,
+          buildProps: [
+            'transition',
+            'transition-property',
+            'transition-duration',
+            'transition-timing-function',
+            'transition-delay',
+            'transform',
+            'transform-origin',
+            'perspective',
+            'opacity',
+            'filter',
+            'backdrop-filter'
           ]
         },
         {
           name: 'Extra',
           open: false,
-          buildProps: ['transition', 'perspective', 'transform', 'cursor', 'opacity', 'z-index']
+          buildProps: [
+            'cursor',
+            'z-index',
+            'pointer-events',
+            'user-select',
+            'visibility',
+            'object-fit',
+            'object-position'
+          ]
         }
       ]
     },

@@ -257,6 +257,101 @@ function PageBuilder() {
   // Handle widget import
   const handleImportWidget = useCallback((widgetData) => {
     if (editor) {
+      // Inject Tailwind CSS if needed
+      if (widgetData.useTailwind) {
+        const tailwindCDN = 'https://cdn.tailwindcss.com';
+        const canvas = editor.Canvas;
+        const frame = canvas.getFrameEl();
+        
+        if (frame && frame.contentDocument) {
+          const doc = frame.contentDocument;
+          const head = doc.head;
+          
+          // Check if Tailwind is already loaded
+          const existingTailwind = head.querySelector('script[src*="tailwindcss"]');
+          if (!existingTailwind) {
+            const script = doc.createElement('script');
+            script.src = tailwindCDN;
+            script.async = true;
+            head.appendChild(script);
+          }
+        }
+      }
+
+      // Inject external stylesheets
+      if (widgetData.externalStyles && widgetData.externalStyles.length > 0) {
+        const canvas = editor.Canvas;
+        const frame = canvas.getFrameEl();
+        
+        if (frame && frame.contentDocument) {
+          const doc = frame.contentDocument;
+          const head = doc.head;
+          
+          widgetData.externalStyles.forEach(url => {
+            // Check if already loaded
+            const existing = head.querySelector(`link[href="${url}"]`);
+            if (!existing) {
+              const link = doc.createElement('link');
+              link.rel = 'stylesheet';
+              link.href = url;
+              link.onload = () => {
+                console.log(`✅ Stylesheet loaded: ${url}`);
+                editor.refresh();
+              };
+              head.appendChild(link);
+            }
+          });
+        }
+      }
+
+      // Inject external scripts
+      if (widgetData.externalScripts && widgetData.externalScripts.length > 0) {
+        const canvas = editor.Canvas;
+        const frame = canvas.getFrameEl();
+        
+        if (frame && frame.contentDocument) {
+          const doc = frame.contentDocument;
+          const head = doc.head;
+          
+          widgetData.externalScripts.forEach(url => {
+            // Check if already loaded
+            const existing = head.querySelector(`script[src="${url}"]`);
+            if (!existing) {
+              const script = doc.createElement('script');
+              script.src = url;
+              script.async = true;
+              script.onload = () => {
+                console.log(`✅ Script loaded: ${url}`);
+                editor.refresh();
+              };
+              script.onerror = () => {
+                console.error(`❌ Failed to load script: ${url}`);
+              };
+              head.appendChild(script);
+            }
+          });
+        }
+      }
+
+      // Add custom CSS if provided
+      if (widgetData.css) {
+        editor.CssComposer.addRules(widgetData.css);
+      }
+
+      // Add custom JS if provided
+      if (widgetData.js) {
+        const canvas = editor.Canvas;
+        const frame = canvas.getFrameEl();
+        if (frame && frame.contentWindow) {
+          try {
+            // Execute JS in the frame context
+            frame.contentWindow.eval(widgetData.js);
+          } catch (error) {
+            console.warn('Error executing widget JS:', error);
+          }
+        }
+      }
+
       // Add imported widget as a custom block
       editor.BlockManager.add(widgetData.id || `custom-${Date.now()}`, {
         label: widgetData.label || 'Custom Widget',
@@ -338,8 +433,20 @@ function PageBuilder() {
           </div>
           
           <div className="panel-content">
-            <div id="blocks-container" style={{ display: activePanel === 'blocks' ? 'block' : 'none' }} />
-            <div id="layers-container" style={{ display: activePanel === 'layers' ? 'block' : 'none' }} />
+            <div 
+              id="blocks-container" 
+              style={{ 
+                display: activePanel === 'blocks' ? 'block' : 'none',
+                height: activePanel === 'blocks' ? '100%' : 'auto'
+              }} 
+            />
+            <div 
+              id="layers-container" 
+              style={{ 
+                display: activePanel === 'layers' ? 'block' : 'none',
+                height: activePanel === 'layers' ? '100%' : 'auto'
+              }} 
+            />
           </div>
         </div>
 
@@ -404,6 +511,7 @@ function PageBuilder() {
           isOpen={showWidgetImport}
           onClose={() => setShowWidgetImport(false)}
           onImport={handleImportWidget}
+          editor={editor}
         />
       )}
 

@@ -117,8 +117,11 @@
 
 .panel-content {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden; /* Let child containers handle scrolling */
+  min-height: 0; /* Important for flex scrolling */
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Center Panel - Canvas */
@@ -369,6 +372,39 @@
   background: var(--borderHover);
 }
 
+/* Ensure GrapesJS blocks container is scrollable */
+:global(#blocks-container) {
+  box-sizing: border-box;
+}
+
+:global(#blocks-container .gjs-blocks-c),
+:global(#blocks-container .gjs-block-category) {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Fix for GrapesJS layers */
+:global(#layers-container) {
+  box-sizing: border-box;
+}
+
+:global(#layers-container .gjs-lm-items),
+:global(#layers-container .gjs-lm-item) {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure GrapesJS block manager is contained */
+:global(.gjs-block-manager) {
+  height: 100%;
+  overflow: hidden;
+}
+
+:global(.gjs-block-manager .gjs-blocks-c) {
+  max-height: none;
+  overflow: visible;
+}
+
 /* Toast Notifications */
 .toast-notification {
   position: fixed;
@@ -507,6 +543,12 @@
 /* Blocks Container Styling */
 #blocks-container {
   padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  flex: 1;
+  box-sizing: border-box;
 }
 
 :global(.gjs-blocks-c) {
@@ -533,6 +575,12 @@
 /* Layers Container Styling */
 #layers-container {
   padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  flex: 1;
+  box-sizing: border-box;
 }
 
 :global(.gjs-layer) {

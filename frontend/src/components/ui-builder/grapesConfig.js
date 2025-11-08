@@ -28,8 +28,13 @@ export const getGrapesConfig = (theme) => {
     
     // Canvas settings
     canvas: {
-      styles: [],
-      scripts: []
+      styles: [
+        // Add Tailwind CSS CDN (will be conditionally loaded)
+        // External styles will be injected dynamically via widget import
+      ],
+      scripts: [
+        // External scripts will be injected dynamically via widget import
+      ]
     },
     
     // Panels configuration

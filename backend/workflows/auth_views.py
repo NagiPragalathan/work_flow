@@ -7,6 +7,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.middleware.csrf import get_token
 from .serializers import UserSerializer, UserRegistrationSerializer
 
 
@@ -112,14 +114,34 @@ def get_current_user(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def check_auth(request):
-    """Check if user is authenticated"""
+    """Check if user is authenticated and ensure CSRF cookie is set"""
+    # Ensure CSRF token is available - this will set the cookie
+    csrf_token = get_token(request)
+    
+    response_data = {
+        'authenticated': False
+    }
+    
     if request.user.is_authenticated:
-        return Response({
+        response_data = {
             'authenticated': True,
             'user': UserSerializer(request.user).data
-        }, status=status.HTTP_200_OK)
-    else:
-        return Response({
-            'authenticated': False
-        }, status=status.HTTP_200_OK)
+        }
+    
+    response = Response(response_data, status=status.HTTP_200_OK)
+    # Set CSRF token in response header for frontend to read
+    response['X-CSRFToken'] = csrf_token
+    return response
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_csrf_token(request):
+    """Get CSRF token endpoint - ensures cookie is set"""
+    csrf_token = get_token(request)
+    response = Response({
+        'csrfToken': csrf_token
+    }, status=status.HTTP_200_OK)
+    response['X-CSRFToken'] = csrf_token
+    return response
 

@@ -9,13 +9,62 @@ class ApiService {
   }
 
   /**
-   * Get default headers with credentials
+   * Get CSRF token from cookies
    */
-  getHeaders(includeContentType = true) {
+  getCsrfToken() {
+    const name = 'csrftoken';
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [key, value] = cookie.trim().split('=');
+      if (key === name) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Fetch CSRF token from backend
+   */
+  async fetchCsrfToken() {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/csrf-token/`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      // CSRF token might be in response header or body
+      const csrfToken = response.headers.get('X-CSRFToken') || 
+                       (await response.json().then(data => data.csrfToken).catch(() => null)) ||
+                       this.getCsrfToken();
+      return csrfToken;
+    } catch (error) {
+      console.warn('Failed to fetch CSRF token:', error);
+      // Try to get from cookies as fallback
+      return this.getCsrfToken();
+    }
+  }
+
+  /**
+   * Get default headers with credentials and CSRF token
+   */
+  async getHeaders(includeContentType = true, isFormData = false, method = 'GET') {
     const headers = {};
-    if (includeContentType) {
+    if (includeContentType && !isFormData) {
       headers['Content-Type'] = 'application/json';
     }
+    
+    // Include CSRF token for state-changing methods
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
+      let csrfToken = this.getCsrfToken();
+      if (!csrfToken) {
+        // Try to fetch if not available
+        csrfToken = await this.fetchCsrfToken();
+      }
+      if (csrfToken) {
+        headers['X-CSRFToken'] = csrfToken;
+      }
+    }
+    
     // Include credentials for session-based auth
     return {
       ...headers,
@@ -28,10 +77,20 @@ class ApiService {
    */
   async request(endpoint, options = {}) {
     const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
+    const isFormData = options.body instanceof FormData;
+    const method = options.method || 'GET';
+    
+    // Get headers with CSRF token
+    const headers = await this.getHeaders(
+      options.body && typeof options.body === 'string' && !isFormData, 
+      isFormData,
+      method
+    );
+    
     const config = {
       ...options,
       headers: {
-        ...this.getHeaders(options.body && typeof options.body === 'string'),
+        ...headers,
         ...options.headers,
       },
       credentials: 'include', // Include cookies for session auth
@@ -49,6 +108,26 @@ class ApiService {
           window.location.href = '/login';
         }
         throw new Error('Unauthorized - Please login');
+      }
+
+      // Handle 403 Forbidden - CSRF token issue
+      if (response.status === 403) {
+        // Try to get CSRF token and retry once
+        const csrfToken = await this.fetchCsrfToken();
+        if (csrfToken && method !== 'GET') {
+          console.log('Retrying request with CSRF token...');
+          // Retry the request with CSRF token
+          config.headers['X-CSRFToken'] = csrfToken;
+          const retryResponse = await fetch(url, config);
+          if (retryResponse.ok) {
+            return await retryResponse.json();
+          }
+        }
+        const errorData = await response.json().catch(() => ({ error: 'CSRF verification failed' }));
+        const error = new Error(errorData.error || errorData.message || 'CSRF verification failed. Please refresh the page.');
+        error.response = errorData;
+        error.status = response.status;
+        throw error;
       }
 
       // Handle other errors
@@ -96,6 +175,10 @@ class ApiService {
 
   async checkAuth() {
     return this.request('/auth/check/');
+  }
+
+  async getCsrfToken() {
+    return this.request('/auth/csrf-token/');
   }
 
   // Workflow methods

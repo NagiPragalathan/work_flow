@@ -8,6 +8,9 @@ const WorkflowNode = ({ data, selected, id }) => {
   const [showActions, setShowActions] = useState(false);
   const nodeTypeDef = nodeTypeDefinitions[data.type];
   const executionState = data.executionState;
+  const executionStatus = data.executionStatus; // From ExecutionsView
+  const showStatusIndicator = data.showStatusIndicator; // From ExecutionsView
+  const statusIndicator = data.statusIndicator; // 'error' or 'success'
   
   // Determine if this is a trigger node (no inputs)
   const isTrigger = nodeTypeDef?.nodeType === 'trigger';
@@ -55,6 +58,24 @@ const WorkflowNode = ({ data, selected, id }) => {
   const nodeColor = nodeTypeDef?.color || '#666666';
 
   const getStatusIcon = () => {
+    // Status indicator from ExecutionsView takes highest priority
+    if (showStatusIndicator && statusIndicator) {
+      if (statusIndicator === 'error') {
+        return (
+          <div className="execution-status-indicator error" title="Error in execution">
+            <BsXCircle style={{ color: '#ef4444', fontSize: '20px' }} />
+          </div>
+        );
+      }
+      if (statusIndicator === 'success') {
+        return (
+          <div className="execution-status-indicator success" title="Success in execution">
+            <BsCheckCircle style={{ color: '#10b981', fontSize: '20px' }} />
+          </div>
+        );
+      }
+    }
+    
     // Execution state takes priority
     if (executionState?.status === 'running') {
       return <FiLoader className="status-icon spin" style={{ color: '#f59e0b' }} />;
@@ -306,6 +327,13 @@ const WorkflowNode = ({ data, selected, id }) => {
         </>
       )}
 
+      {/* Execution Status Indicator (from ExecutionsView) */}
+      {showStatusIndicator && statusIndicator && (
+        <div className="execution-status-indicator-wrapper">
+          {getStatusIcon()}
+        </div>
+      )}
+      
       {/* Node Content */}
       <div className="node-header">
         <div className="node-icon" style={{
@@ -419,6 +447,13 @@ const WorkflowNode = ({ data, selected, id }) => {
         .workflow-node:hover {
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
           transform: translateY(-2px);
+        }
+        
+        .execution-status-indicator-wrapper {
+          position: absolute;
+          top: -12px;
+          right: -12px;
+          z-index: 1000;
         }
 
         /* Hover Action Menu */

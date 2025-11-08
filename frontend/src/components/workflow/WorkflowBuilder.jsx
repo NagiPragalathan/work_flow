@@ -610,14 +610,18 @@ function WorkflowBuilder() {
 
         const createdWorkflow = await createResponse.json();
 
-        // Execute the test workflow using workflowApi (handles CSRF)
-        const result = await workflowApi.executeWorkflow(
-          createdWorkflow.id,
-          { message: 'test api key from agent flow' },
-          {}
-        );
+        // Execute the test workflow
+        const response = await fetch(`/api/workflows/${createdWorkflow.id}/execute/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            trigger_data: { message: 'test api key from agent flow' },
+            credentials: {}
+          })
+        });
 
-        if (result) {
+        if (response.ok) {
+          const result = await response.json();
           const endTime = new Date();
           
           console.log('🔍 Full backend response:', result);
@@ -958,12 +962,21 @@ function WorkflowBuilder() {
       });
     }
 
-    // Execute workflow with chat message using workflowApi (handles CSRF)
-    const result = await workflowApi.executeWorkflow(
-      workflowId, 
-      { message: message, text: message }, 
-      {}
-    );
+    // Execute workflow with chat message
+    const response = await fetch(`/api/workflows/${workflowId}/execute/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        trigger_data: { message: message, text: message },
+        credentials: {}
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Workflow execution failed: ${response.status}`);
+    }
+
+    const result = await response.json();
     
     console.log('🔍 Full workflow execution result:', result);
     console.log('🔍 Execution node states:', result.execution?.node_states);
@@ -1538,10 +1551,20 @@ function WorkflowBuilder() {
       const executionStartTime = Date.now();
       
       try {
-        // Use workflowApi which handles CSRF tokens
-        const result = await workflowApi.executeWorkflow(workflowId, { text: 'Manual trigger execution' }, {});
+        const response = await fetch(`/api/workflows/${workflowId}/execute/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            trigger_data: { text: 'Manual trigger execution' },
+            credentials: {}
+          })
+        });
 
-        // Result is already parsed by workflowApi
+        if (!response.ok) {
+          throw new Error(`Execution failed: ${response.status}`);
+        }
+
+        const result = await response.json();
         
         // Process node states with animations
         if (result.execution && result.execution.node_states) {

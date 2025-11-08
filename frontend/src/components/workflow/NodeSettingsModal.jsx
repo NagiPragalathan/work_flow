@@ -107,18 +107,10 @@ const NodeSettingsModal = ({ node, nodes, edges, onUpdate, onClose, onExecuteNod
             <span>1 day left in your non trial</span>
             <span>1000/1000 Executions</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button className="upgrade-btn" style={{ margin: 0 }}>
-              Upgrade now
-            </button>
-            <button 
-              className="node-settings-close-btn" 
-              onClick={onClose}
-              title="Close"
-            >
-              <FiX />
-            </button>
-          </div>
+          <button className="upgrade-btn">
+            Upgrade now
+            <FiX onClick={onClose} style={{ marginLeft: '8px', cursor: 'pointer' }} />
+          </button>
         </div>
 
         {/* Main Content - Three Columns */}

@@ -12,7 +12,8 @@ import {
 import '@xyflow/react/dist/style.css';
 import { 
   FiMenu, FiPlay, FiSquare, FiSave, FiFolder, FiTrash2, 
-  FiSun, FiMoon, FiEdit3, FiMessageCircle, FiGrid, FiLink2, FiSettings, FiDownload 
+  FiSun, FiMoon, FiEdit3, FiMessageCircle, FiGrid, FiLink2, FiSettings, FiDownload,
+  FiMoreVertical, FiUpload, FiRefreshCw
 } from 'react-icons/fi';
 
 import {
@@ -88,6 +89,28 @@ function WorkflowApp() {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [clearWorkspaceModalOpen, setClearWorkspaceModalOpen] = useState(false);
   const [flowKey, setFlowKey] = useState(0);
+  const [activeTab, setActiveTab] = useState('editor'); // 'editor' or 'executions'
+  const [workflowName, setWorkflowName] = useState('Untitled Workflow');
+  const [isSaved, setIsSaved] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close dropdown menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMoreMenuOpen(false);
+      }
+    };
+
+    if (moreMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [moreMenuOpen]);
 
   // Utility function to load all properties from localStorage for nodes
   const loadNodesWithProperties = useCallback((nodesToEnhance) => {
@@ -129,6 +152,9 @@ function WorkflowApp() {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
+  // Load saved workflow from localStorage on mount (only once)
+  const hasLoadedWorkflow = useRef(false);
+
   // Load execution history from localStorage on mount
   useEffect(() => {
     try {
@@ -153,6 +179,46 @@ function WorkflowApp() {
       }
     }
   }, [executionHistory]);
+
+  // Auto-save workflow to localStorage whenever nodes or edges change (debounced)
+  useEffect(() => {
+    const autoSaveTimer = setTimeout(() => {
+      if (nodes.length > 0 || edges.length > 0) {
+        try {
+          // Load all properties from localStorage before saving
+          const enhancedNodes = loadNodesWithProperties(nodes);
+          
+          const workflowToSave = {
+            nodes: enhancedNodes.map(node => ({
+              ...node,
+              data: {
+                ...node.data,
+                // Remove function references
+                onSettingsClick: undefined,
+                onExecutionClick: undefined,
+                onDelete: undefined,
+                onDuplicate: undefined,
+                onChatClick: undefined,
+                onTrackExecution: undefined
+              }
+            })),
+            edges: edges,
+            version: '1.0.0',
+            savedAt: new Date().toISOString()
+          };
+          
+          localStorage.setItem('savedWorkflow', JSON.stringify(workflowToSave));
+          localStorage.setItem('workflowName', workflowName);
+          setIsSaved(true);
+          console.log('💾 Auto-saved workflow to localStorage');
+        } catch (error) {
+          console.error('Error auto-saving workflow:', error);
+        }
+      }
+    }, 1000); // Debounce by 1 second
+    
+    return () => clearTimeout(autoSaveTimer);
+  }, [nodes, edges, workflowName, loadNodesWithProperties]);
 
   // Check if manual trigger exists
   const hasManualTrigger = nodes.some(node => node.data.type === 'manual-trigger');
@@ -1003,6 +1069,56 @@ function WorkflowApp() {
     );
   }, [handleSettingsClick, handleExecutionClick, deleteNode, duplicateNode, handleChatClick, handleChatExecution]);
 
+  // Load saved workflow from localStorage after all handlers are defined
+  useEffect(() => {
+    if (hasLoadedWorkflow.current || nodes.length > 0) return;
+    
+    try {
+      const savedWorkflow = localStorage.getItem('savedWorkflow');
+      if (savedWorkflow) {
+        const workflow = JSON.parse(savedWorkflow);
+        const savedName = localStorage.getItem('workflowName') || 'Untitled Workflow';
+        setWorkflowName(savedName);
+        
+        // Restore nodes and edges
+        if (workflow.nodes && workflow.nodes.length > 0) {
+          const processedNodes = workflow.nodes.map(node => {
+            // Restore properties to localStorage
+            if (node.data.properties && Object.keys(node.data.properties).length > 0) {
+              try {
+                localStorage.setItem(`inputValues_${node.id}`, JSON.stringify(node.data.properties));
+              } catch (error) {
+                console.error(`Error saving to localStorage for node ${node.id}:`, error);
+              }
+            }
+            
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                onSettingsClick: handleSettingsClick,
+                onExecutionClick: handleExecutionClick,
+                onDelete: deleteNode,
+                onDuplicate: duplicateNode,
+                onChatClick: handleChatClick,
+                onTrackExecution: handleChatExecution
+              }
+            };
+          });
+          
+          setNodes(processedNodes);
+          setEdges(workflow.edges || []);
+          setIsSaved(true);
+          hasLoadedWorkflow.current = true;
+          console.log('📂 Loaded saved workflow from localStorage');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading saved workflow:', error);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes.length]);
+
   const onDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
@@ -1369,6 +1485,12 @@ function WorkflowApp() {
       });
       console.log(`🗑️ Cleaned up localStorage for ${nodes.length} nodes`);
       
+      // Clear saved workflow
+      localStorage.removeItem('savedWorkflow');
+      localStorage.removeItem('workflowName');
+      setIsSaved(false);
+      setWorkflowName('Untitled Workflow');
+      
       setNodes([]);
       setEdges([]);
       setSelectedNodeForSettings(null);
@@ -1514,8 +1636,44 @@ function WorkflowApp() {
   }, [nodes, edges, loadNodesWithProperties, showToast]);
 
   const saveWorkflow = useCallback(() => {
-    setExportModalOpen(true);
-  }, []);
+    if (nodes.length === 0 && edges.length === 0) {
+      showToast('No workflow to save! Add some nodes first.', 'warning');
+      return;
+    }
+
+    try {
+      // Load all properties from localStorage before saving
+      const enhancedNodes = loadNodesWithProperties(nodes);
+      
+      const workflowToSave = {
+        nodes: enhancedNodes.map(node => ({
+          ...node,
+          data: {
+            ...node.data,
+            // Remove function references
+            onSettingsClick: undefined,
+            onExecutionClick: undefined,
+            onDelete: undefined,
+            onDuplicate: undefined,
+            onChatClick: undefined,
+            onTrackExecution: undefined
+          }
+        })),
+        edges: edges,
+        version: '1.0.0',
+        savedAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem('savedWorkflow', JSON.stringify(workflowToSave));
+      localStorage.setItem('workflowName', workflowName);
+      setIsSaved(true);
+      showToast('✅ Workflow saved successfully!', 'success', 2000);
+      console.log('💾 Saved workflow to localStorage');
+    } catch (error) {
+      console.error('Error saving workflow:', error);
+      showToast('❌ Failed to save workflow', 'error');
+    }
+  }, [nodes, edges, workflowName, loadNodesWithProperties, showToast]);
 
   const handleImport = useCallback(async (importType, data) => {
     try {
@@ -1569,6 +1727,12 @@ function WorkflowApp() {
 
         setNodes(processedNodes);
         setEdges(processedEdges);
+        
+        // Update workflow name if available
+        if (data.name) {
+          setWorkflowName(data.name);
+        }
+        setIsSaved(true);
         
         showToast('✅ Workflow imported successfully!', 'success');
         console.log('📂 Imported workflow:', {
@@ -1653,6 +1817,12 @@ function WorkflowApp() {
         setNodes(processedNodes);
         setEdges(processedEdges);
         
+        // Update workflow name if available
+        if (data.name) {
+          setWorkflowName(data.name);
+        }
+        setIsSaved(true);
+        
         showToast('✅ Exported workflow imported successfully!', 'success');
         console.log('📂 Imported exported workflow:', {
           nodes: processedNodes.length,
@@ -1676,6 +1846,21 @@ function WorkflowApp() {
   }, []);
 
   const confirmClearWorkspace = useCallback(() => {
+    // Clean up localStorage for all nodes
+    nodes.forEach(node => {
+      try {
+        localStorage.removeItem(`inputValues_${node.id}`);
+      } catch (error) {
+        console.error(`Error cleaning up localStorage for node ${node.id}:`, error);
+      }
+    });
+    
+    // Clear saved workflow
+    localStorage.removeItem('savedWorkflow');
+    localStorage.removeItem('workflowName');
+    setIsSaved(false);
+    setWorkflowName('Untitled Workflow');
+    
     setNodes([]);
     setEdges([]);
     setExecutionHistory([]);
@@ -1687,7 +1872,7 @@ function WorkflowApp() {
     setFlowKey(prev => prev + 1); // Force re-render
     setClearWorkspaceModalOpen(false);
     showToast('🗑️ Workspace cleared successfully!', 'success', 3000);
-  }, [showToast]);
+  }, [nodes, showToast]);
 
   const addNotesNode = useCallback(() => {
     const newNode = {
@@ -1792,77 +1977,136 @@ function WorkflowApp() {
       />
 
       <div className="main-content" style={{ marginLeft: libraryOpen ? '380px' : '0' }}>
-        <div className="toolbar">
-          <div className="toolbar-left">
-            <button
-              className="toolbar-btn toggle-library"
-              onClick={() => setLibraryOpen(!libraryOpen)}
-              title="Toggle Node Library"
-            >
-              <FiMenu />
-            </button>
-            <h1 className="app-title">Workflow Builder</h1>
-          </div>
-
-          <div className="toolbar-center">
-            {hasManualTrigger && (
-              <>
-            <button
-              className="toolbar-btn primary"
-              onClick={executeWorkflow}
-              disabled={execution?.status === 'running' || nodes.length === 0}
-            >
-              <FiPlay /> Execute
-            </button>
-            {execution?.status === 'running' && (
-              <button className="toolbar-btn danger" onClick={stopExecution}>
-                <FiSquare /> Stop
+        {/* n8n-style Header */}
+        <div className="workflow-header">
+          <div className="header-top">
+            <div className="header-left">
+              <button
+                className="header-btn toggle-library"
+                onClick={() => setLibraryOpen(!libraryOpen)}
+                title="Toggle Node Library"
+              >
+                <FiMenu />
               </button>
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="toolbar-right">
-            <div className="toolbar-stats">
-              <div className="stat-card nodes">
-                <div className="stat-icon">
-                  <FiGrid />
-                </div>
-                <div className="stat-content">
-                  <span className="stat-value">{nodes.length}</span>
-                  <span className="stat-label">Nodes</span>
-                </div>
-              </div>
-              <div className="stat-card connections">
-                <div className="stat-icon">
-                  <FiLink2 />
-                </div>
-                <div className="stat-content">
-                  <span className="stat-value">{edges.length}</span>
-                  <span className="stat-label">Connections</span>
-                </div>
+              <div className="workflow-breadcrumb">
+                <span className="workflow-owner">Personal</span>
+                <span className="breadcrumb-separator">/</span>
+                <input
+                  type="text"
+                  className="workflow-name-input"
+                  value={workflowName}
+                  onChange={(e) => setWorkflowName(e.target.value)}
+                  onBlur={saveWorkflow}
+                />
               </div>
             </div>
-            <button 
-              className="toolbar-btn icon-only" 
-              onClick={() => setSettingsOpen(true)}
-              title="Settings"
-            >
-              <FiSettings />
-            </button>
-            <button 
-              className="toolbar-btn icon-only" 
-              onClick={toggleTheme} 
-              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            >
-              {theme === 'light' ? <FiMoon /> : <FiSun />}
-            </button>
+
+            <div className="header-center">
+              <div className="header-tabs">
+                <button
+                  className={`header-tab ${activeTab === 'editor' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('editor')}
+                >
+                  Editor
+                </button>
+                <button
+                  className={`header-tab ${activeTab === 'executions' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('executions')}
+                >
+                  Executions
+                </button>
+              </div>
+            </div>
+
+            <div className="header-right">
+              <div className="header-stats">
+                <div className="header-stat">
+                  <FiGrid />
+                  <span>{nodes.length}</span>
+                  <span className="stat-label">NODES</span>
+                </div>
+                <div className="header-stat">
+                  <FiLink2 />
+                  <span>{edges.length}</span>
+                  <span className="stat-label">CONNECTIONS</span>
+                </div>
+              </div>
+              
+              {hasManualTrigger && (
+                <button
+                  className="header-btn primary"
+                  onClick={executeWorkflow}
+                  disabled={execution?.status === 'running' || nodes.length === 0}
+                >
+                  <FiPlay /> Execute
+                </button>
+              )}
+              
+              <button
+                className="header-btn save-btn"
+                onClick={saveWorkflow}
+                title="Save workflow"
+              >
+                <FiSave />
+                {isSaved ? 'Saved' : 'Save'}
+              </button>
+              
+              <div className="header-menu-container" ref={menuRef}>
+                <button
+                  className="header-btn icon-only"
+                  onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                  title="More options"
+                >
+                  <FiMoreVertical />
+                </button>
+                {moreMenuOpen && (
+                  <div className="header-dropdown-menu">
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
+                        handleExport('without-credentials');
+                        setMoreMenuOpen(false);
+                      }}
+                    >
+                      <FiDownload /> Download
+                    </button>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
+                        openImportModal();
+                        setMoreMenuOpen(false);
+                      }}
+                    >
+                      <FiUpload /> Import from File...
+                    </button>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
+                        setSettingsOpen(true);
+                        setMoreMenuOpen(false);
+                      }}
+                    >
+                      <FiSettings /> Settings
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              <button
+                className="header-btn icon-only"
+                onClick={toggleTheme}
+                title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              >
+                {theme === 'light' ? <FiMoon /> : <FiSun />}
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="workflow-canvas" ref={reactFlowWrapper}>
-          <ReactFlow
+        {/* Content Area - Editor or Executions */}
+        {activeTab === 'editor' ? (
+          <div className="workflow-canvas" ref={reactFlowWrapper}>
+            <ReactFlow
             key={`flow-${flowKey}-${nodes.length}-${edges.length}`}
             nodes={nodes}
             edges={edges}
@@ -1914,6 +2158,18 @@ function WorkflowApp() {
             />
           </ReactFlow>
         </div>
+        ) : (
+          <div className="executions-view">
+            <ExecutionStatusBar 
+              executionHistory={executionHistory}
+              isExecuting={isExecuting}
+              currentExecution={currentExecution}
+              onClearHistory={handleClearHistory}
+              isExpanded={true}
+              onToggleExpanded={setLogsExpanded}
+            />
+          </div>
+        )}
       </div>
 
       {selectedNodeForSettings && (
@@ -1933,14 +2189,16 @@ function WorkflowApp() {
         onExecuteWorkflow={executeWorkflowWithMessage}
       />
       
-      <ExecutionStatusBar 
-        executionHistory={executionHistory}
-        isExecuting={isExecuting}
-        currentExecution={currentExecution}
-        onClearHistory={handleClearHistory}
-        isExpanded={logsExpanded}
-        onToggleExpanded={setLogsExpanded}
-      />
+      {activeTab === 'editor' && (
+        <ExecutionStatusBar 
+          executionHistory={executionHistory}
+          isExecuting={isExecuting}
+          currentExecution={currentExecution}
+          onClearHistory={handleClearHistory}
+          isExpanded={logsExpanded}
+          onToggleExpanded={setLogsExpanded}
+        />
+      )}
 
             <ExecutionResultModal 
               isOpen={!!executionResult}

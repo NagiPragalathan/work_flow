@@ -12,6 +12,43 @@
   position: relative;
 }
 
+/* Prevent GrapesJS from hiding UI elements - CRITICAL */
+.page-builder :global(.gjs-pn-panels),
+.page-builder :global(.gjs-pn-btn) {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Prevent fullscreen mode from hiding navigation */
+.page-builder :global(.gjs-fullscreen) {
+  position: relative !important;
+}
+
+.page-builder :global(.gjs-fullscreen) .left-panel,
+.page-builder :global(.gjs-fullscreen) .right-panel {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Ensure layout is always visible */
+.page-builder-layout {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Ensure toolbar and navigation are always visible */
+.page-builder-toolbar,
+.page-builder .page-builder-toolbar {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 1000 !important;
+}
+
 /* Loading State */
 .page-builder-loading {
   position: fixed;
@@ -187,100 +224,42 @@
   position: relative;
 }
 
-/* Left Panel - Blocks/Layers/Styles */
+/* Left Panel - Blocks Only */
 .left-panel {
-  width: 320px;
+  width: 300px;
   background: var(--background);
   border-right: 1px solid var(--border);
-  display: flex;
+  display: flex !important;
   flex-direction: column;
+  visibility: visible !important;
+  opacity: 1 !important;
   overflow: hidden;
-  box-shadow: 4px 0 12px var(--shadow);
+  box-shadow: 2px 0 8px var(--shadow);
   position: relative;
 }
 
-.panel-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: 0 2px 8px var(--shadow);
-  position: relative;
-  overflow: hidden;
-}
-
-.panel-tab {
-  flex: 1;
+/* Panel Header for Left Panel */
+.left-panel .panel-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 16px;
-  background: transparent;
-  border: none;
-  color: var(--textSecondary);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  letter-spacing: 0.3px;
-}
-
-.panel-tab:hover {
-  color: var(--text);
-  background: var(--hover);
-  transform: translateY(-1px);
-}
-
-.panel-tab.active {
-  color: var(--text);
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 2px solid var(--border);
   background: var(--surface);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.left-panel .panel-header svg {
+  color: var(--text);
+  opacity: 0.8;
+}
+
+.left-panel .panel-header h3 {
+  margin: 0;
+  font-size: 16px;
   font-weight: 700;
-}
-
-.panel-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--text);
-  opacity: 1;
-  transform: scaleX(1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 3px 3px 0 0;
-}
-
-.panel-tab::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--text);
-  opacity: 0;
-  transform: scaleX(0);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.panel-tab svg {
-  transition: transform 0.3s ease;
-}
-
-.panel-tab:hover svg {
-  transform: scale(1.1);
-}
-
-.panel-tab.active svg {
-  transform: scale(1.15);
-}
-
-.panel-tab svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
+  color: var(--text);
+  letter-spacing: 0.5px;
 }
 
 .panel-content {
@@ -358,18 +337,26 @@
   color: var(--background);
 }
 
-/* Right Panel - Properties */
+/* Right Panel - Layers, Properties, Styles */
 .right-panel {
-  width: 320px;
+  width: 340px;
   background: var(--background);
   border-left: 1px solid var(--border);
-  display: flex;
+  display: flex !important;
   flex-direction: column;
+  visibility: visible !important;
+  opacity: 1 !important;
   overflow: hidden;
-  box-shadow: -4px 0 12px var(--shadow);
+  box-shadow: -2px 0 8px var(--shadow);
   position: relative;
 }
 
+/* Right panel header - hidden, using tabs instead */
+.right-panel .panel-header {
+  display: none;
+}
+
+/* General panel header style (for left panel only now) */
 .panel-header {
   padding: 18px 20px;
   border-bottom: 1px solid var(--border);
@@ -390,13 +377,14 @@
   z-index: 1;
 }
 
-/* Properties Tabs */
+/* Properties Tabs (now includes Layers, Properties, Styles) */
 .properties-tabs {
   display: flex;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
   background: var(--surface);
   padding: 0;
   position: relative;
+  box-shadow: 0 2px 8px var(--shadow);
 }
 
 .prop-tab {
@@ -427,8 +415,22 @@
 .prop-tab.active {
   color: var(--text);
   border-bottom-color: var(--text);
-  background: var(--surface);
+  background: var(--background);
   font-weight: 700;
+}
+
+.prop-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--text);
+  opacity: 1;
+  transform: scaleX(1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 3px 3px 0 0;
 }
 
 .prop-tab svg {
@@ -461,10 +463,22 @@
   display: none;
   width: 100%;
   height: 100%;
+  overflow: auto;
 }
 
 .prop-tab-content.active {
   display: block;
+}
+
+/* Layers container in right panel */
+#layers-container {
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  min-height: 0;
+  flex: 1;
+  box-sizing: border-box;
 }
 
 .properties-content::-webkit-scrollbar {

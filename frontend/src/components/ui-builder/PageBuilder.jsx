@@ -35,8 +35,7 @@ function PageBuilder() {
   const [showCodeExport, setShowCodeExport] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [activePanel, setActivePanel] = useState('blocks'); // blocks, layers, styles
-  const [activePropTab, setActivePropTab] = useState('properties'); // properties, styles-props
+  const [activeRightTab, setActiveRightTab] = useState('properties'); // layers, properties, styles-props
   const [hasChanges, setHasChanges] = useState(false);
   const [initError, setInitError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,17 +73,50 @@ function PageBuilder() {
         }
       });
       
-      grapes.Commands.add('show-blocks', {
-        run: () => setActivePanel('blocks')
+      grapes.Commands.add('show-layers', {
+        run: () => setActiveRightTab('layers')
       });
       
-      grapes.Commands.add('show-layers', {
-        run: () => setActivePanel('layers')
+      // Disable fullscreen command to prevent UI from hiding
+      grapes.Commands.add('fullscreen', {
+        run: () => {
+          // Do nothing - prevent fullscreen from hiding UI
+        }
+      });
+      
+      // Disable preview command or make it not hide UI
+      grapes.Commands.add('preview', {
+        run: () => {
+          // Do nothing - prevent preview from hiding UI
+        }
       });
       
       // Track changes
       grapes.on('change', () => {
         setHasChanges(true);
+      });
+      
+      // When component is selected, show layers tab
+      grapes.on('component:selected', () => {
+        setActiveRightTab('layers');
+        
+        // Ensure UI stays visible
+        const leftPanel = document.querySelector('.left-panel');
+        const rightPanel = document.querySelector('.right-panel');
+        const toolbar = document.querySelector('.page-builder-toolbar');
+        
+        if (leftPanel) {
+          leftPanel.style.display = 'flex';
+          leftPanel.style.visibility = 'visible';
+        }
+        if (rightPanel) {
+          rightPanel.style.display = 'flex';
+          rightPanel.style.visibility = 'visible';
+        }
+        if (toolbar) {
+          toolbar.style.display = 'flex';
+          toolbar.style.visibility = 'visible';
+        }
       });
       
       // Global variable to track dragged block
@@ -704,51 +736,26 @@ function PageBuilder() {
 
       {/* Main Editor Layout */}
       <div className="page-builder-layout">
-        {/* Left Panel - Blocks/Layers/Styles */}
+        {/* Left Panel - Blocks Only */}
         <div className="left-panel">
-          <div className="panel-tabs">
-            <button
-              className={`panel-tab ${activePanel === 'blocks' ? 'active' : ''}`}
-              onClick={() => setActivePanel('blocks')}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/>
-              </svg>
-              <span>Blocks</span>
-            </button>
-            <button
-              className={`panel-tab ${activePanel === 'layers' ? 'active' : ''}`}
-              onClick={() => setActivePanel('layers')}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-              </svg>
-              <span>Layers</span>
-            </button>
+          <div className="panel-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+            </svg>
+            <h3>Blocks</h3>
           </div>
           
           <div className="panel-content">
             <div 
               id="blocks-container" 
               style={{ 
-                display: activePanel === 'blocks' ? 'block' : 'none',
-                height: activePanel === 'blocks' ? '100%' : '0',
-                overflow: activePanel === 'blocks' ? 'auto' : 'hidden',
-                overflowY: activePanel === 'blocks' ? 'auto' : 'hidden',
-                overflowX: 'hidden'
-              }} 
-            />
-            <div 
-              id="layers-container" 
-              style={{ 
-                display: activePanel === 'layers' ? 'block' : 'none',
-                height: activePanel === 'layers' ? '100%' : '0',
-                overflow: activePanel === 'layers' ? 'auto' : 'hidden',
-                overflowY: activePanel === 'layers' ? 'auto' : 'hidden',
+                display: 'block',
+                height: '100%',
+                overflow: 'auto',
+                overflowY: 'auto',
                 overflowX: 'hidden'
               }} 
             />
@@ -760,25 +767,35 @@ function PageBuilder() {
           <div id="gjs-editor" />
         </div>
 
-        {/* Right Panel - Properties */}
+        {/* Right Panel - Layers, Properties, Styles */}
         <div className="right-panel">
-          <div className="panel-header">
-            <h3>Properties</h3>
-          </div>
           <div className="properties-tabs">
             <button
-              className={`prop-tab ${activePropTab === 'properties' ? 'active' : ''}`}
-              onClick={() => setActivePropTab('properties')}
+              className={`prop-tab ${activeRightTab === 'layers' ? 'active' : ''}`}
+              onClick={() => setActiveRightTab('layers')}
+              title="Layers - View component tree"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+              <span>Layers</span>
+            </button>
+            <button
+              className={`prop-tab ${activeRightTab === 'properties' ? 'active' : ''}`}
+              onClick={() => setActiveRightTab('properties')}
+              title="Component Properties"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                 <path d="M9 9h6M9 15h6"/>
               </svg>
-              <span>Component</span>
+              <span>Properties</span>
             </button>
             <button
-              className={`prop-tab ${activePropTab === 'styles-props' ? 'active' : ''}`}
-              onClick={() => setActivePropTab('styles-props')}
+              className={`prop-tab ${activeRightTab === 'styles-props' ? 'active' : ''}`}
+              onClick={() => setActiveRightTab('styles-props')}
+              title="Style Editor"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -788,12 +805,29 @@ function PageBuilder() {
           </div>
           <div className="properties-content">
             <div 
+              id="layers-container" 
+              className={activeRightTab === 'layers' ? 'prop-tab-content active' : 'prop-tab-content'}
+              style={{ 
+                display: activeRightTab === 'layers' ? 'block' : 'none',
+                height: '100%',
+                overflow: 'auto',
+                overflowY: 'auto',
+                overflowX: 'hidden'
+              }}
+            />
+            <div 
               id="traits-container" 
-              className={activePropTab === 'properties' ? 'prop-tab-content active' : 'prop-tab-content'}
+              className={activeRightTab === 'properties' ? 'prop-tab-content active' : 'prop-tab-content'}
+              style={{ 
+                display: activeRightTab === 'properties' ? 'block' : 'none'
+              }}
             />
             <div 
               id="styles-container" 
-              className={activePropTab === 'styles-props' ? 'prop-tab-content active' : 'prop-tab-content'}
+              className={activeRightTab === 'styles-props' ? 'prop-tab-content active' : 'prop-tab-content'}
+              style={{ 
+                display: activeRightTab === 'styles-props' ? 'block' : 'none'
+              }}
             >
               {/* Selector Manager - for selecting which element/class to style */}
               <div className="selectors-wrapper">

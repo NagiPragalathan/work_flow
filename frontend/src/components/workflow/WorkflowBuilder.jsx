@@ -26,6 +26,7 @@ import {
   ToastContainer,
   VerticalToolbar
 } from '../';
+import NodeSettingsModal from './NodeSettingsModal';
 import AIChatbot from '../ui/AIChatbot';
 import SettingsModal from '../ui/SettingsModal';
 import ExportModal from '../ui/ExportModal';
@@ -69,6 +70,8 @@ function WorkflowBuilder() {
     return types;
   }, []); // Empty dependency array since nodeTypeDefinitions and components don't change
   const [selectedNodeForSettings, setSelectedNodeForSettings] = useState(null);
+  const [nodeSettingsModalOpen, setNodeSettingsModalOpen] = useState(false);
+  const [selectedNodeForModal, setSelectedNodeForModal] = useState(null);
   const [libraryOpen, setLibraryOpen] = useState(true);
   const [execution, setExecution] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -635,6 +638,61 @@ function WorkflowBuilder() {
             ],
           };
 
+        // Execute the test workflow using workflowApi (handles CSRF)
+        const result = await workflowApi.executeWorkflow(
+          createdWorkflow.id,
+          { message: 'test api key from agent flow' },
+          {}
+        );
+
+        if (result) {
+          const endTime = new Date();
+          
+          console.log('🔍 Full backend response:', result);
+          console.log('🔍 Execution object:', result.execution);
+          console.log('🔍 Node states:', result.execution?.node_states);
+          
+          // Find the node result from node_states
+          const nodeResult = result.execution?.node_states?.[nodeId];
+          console.log('🔍 Node result:', nodeResult);
+          
+          // Check if the workflow execution failed
+          if (result.status === 'error' || result.error) {
+            const errorMessage = result.error || 'Workflow execution failed';
+            
+            console.log('❌ Workflow execution failed:', errorMessage);
+            
+            const nodeExecution = {
+              id: Date.now() + Math.random(),
+              nodeType: node.data.type,
+              nodeName: node.data.label,
+              status: 'error',
+              startTime,
+              endTime,
+              source: 'test',
+              output: `❌ ${errorMessage}`,
+              duration: endTime - startTime
+            };
+            
+            // Update node execution state to show error
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === nodeId
+                  ? {
+                      ...n,
+                      data: {
+                        ...n.data,
+                        executionState: {
+                          status: 'error',
+                          output: `❌ ${errorMessage}`,
+                          startTime,
+                          endTime
+                        }
+                      }
+                    }
+                  : n
+              )
+
           // Create workflow in backend
           const createResponse = await fetch("/api/workflows/", {
             method: "POST",
@@ -650,6 +708,7 @@ function WorkflowBuilder() {
           if (!createResponse.ok) {
             throw new Error(
               `Failed to create test workflow: ${createResponse.status}`
+
             );
           }
 
@@ -718,6 +777,43 @@ function WorkflowBuilder() {
                 )
               );
 
+    // Execute workflow with chat message using workflowApi (handles CSRF)
+    const result = await workflowApi.executeWorkflow(
+      workflowId, 
+      { message: message, text: message }, 
+      {}
+    );
+    
+    console.log('🔍 Full workflow execution result:', result);
+    console.log('🔍 Execution node states:', result.execution?.node_states);
+    
+    // Process node states with animations
+    if (result.execution && result.execution.node_states) {
+      const nodeStates = result.execution.node_states;
+      
+      // Animate nodes sequentially
+      for (const nodeId of (result.execution.execution_order || Object.keys(nodeStates))) {
+        const nodeState = nodeStates[nodeId];
+        const node = nodes.find(n => n.id === nodeId);
+        
+        if (node && nodeState) {
+          // Set node to running
+          setNodeExecutionStates(prev => ({
+            ...prev,
+            [nodeId]: { status: 'running', startTime: Date.now() }
+          }));
+          
+          setNodes((nds) =>
+            nds.map((n) =>
+              n.id === nodeId
+                ? {
+                    ...n,
+                    data: {
+                      ...n.data,
+                      executionState: {
+                        status: 'running',
+                        output: 'Executing...',
+                        timestamp: new Date().toISOString()
               // Add to execution history
               setExecutionHistory((prev) => [
                 nodeExecution,
@@ -1673,6 +1769,11 @@ function WorkflowBuilder() {
       const executionStartTime = Date.now();
 
       try {
+        // Use workflowApi which handles CSRF tokens
+        const result = await workflowApi.executeWorkflow(workflowId, { text: 'Manual trigger execution' }, {});
+
+        // Result is already parsed by workflowApi
+        
         const response = await fetch(`/api/workflows/${workflowId}/execute/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -2550,6 +2651,12 @@ function WorkflowBuilder() {
                 deleteNode(node.id);
               }
             }}
+            onNodeDoubleClick={(event, node) => {
+              // Open node settings modal on double click
+              event.preventDefault();
+              setSelectedNodeForModal(node);
+              setNodeSettingsModalOpen(true);
+            }}
           >
             <Background variant="dots" gap={16} size={1} />
             <Controls />
@@ -2581,6 +2688,24 @@ function WorkflowBuilder() {
         />
       )}
 
+      {nodeSettingsModalOpen && selectedNodeForModal && (
+        <NodeSettingsModal
+          node={selectedNodeForModal}
+          nodes={nodes}
+          edges={edges}
+          onUpdate={updateNodeData}
+          onClose={() => {
+            setNodeSettingsModalOpen(false);
+            setSelectedNodeForModal(null);
+          }}
+          onExecuteNode={handleExecutionClick}
+        />
+      )}
+
+      {execution && <ExecutionViewer execution={execution} onClose={() => setExecution(null)} />}
+
+      <ChatBox 
+        isOpen={chatOpen} 
       <ChatBox
         isOpen={chatOpen}
         onClose={() => setChatOpen(false)}

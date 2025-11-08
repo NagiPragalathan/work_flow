@@ -9,6 +9,174 @@
   overflow: hidden;
   transition: background-color 0.3s ease;
   color: var(--text);
+  position: relative;
+}
+
+/* Loading State */
+.page-builder-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.loading-content {
+  text-align: center;
+  padding: 40px;
+}
+
+.loading-spinner {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 24px;
+  border: 4px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-content h3 {
+  font-size: 24px;
+  margin: 0 0 12px 0;
+  color: var(--text);
+}
+
+.loading-content p {
+  font-size: 16px;
+  color: var(--textSecondary);
+  margin: 0;
+}
+
+/* Error State */
+.page-builder-error {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.error-content {
+  max-width: 600px;
+  width: 100%;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 8px 32px var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.error-content h2 {
+  font-size: 28px;
+  margin: 0 0 16px 0;
+  color: var(--error);
+}
+
+.error-message {
+  font-size: 16px;
+  color: var(--text);
+  margin: 0 0 24px 0;
+  padding: 16px;
+  background: var(--backgroundSecondary);
+  border-radius: 8px;
+  border-left: 4px solid var(--error);
+  font-family: monospace;
+}
+
+.error-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.error-actions .btn {
+  flex: 1;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.error-actions .btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.error-actions .btn-primary:hover {
+  background: var(--primaryHover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--primaryShadow);
+}
+
+.error-actions .btn-secondary {
+  background: var(--backgroundSecondary);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.error-actions .btn-secondary:hover {
+  background: var(--surface);
+  border-color: var(--primary);
+}
+
+.error-help {
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.error-help h4 {
+  font-size: 18px;
+  margin: 0 0 16px 0;
+  color: var(--text);
+}
+
+.error-help ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.error-help li {
+  padding: 12px;
+  margin-bottom: 8px;
+  background: var(--backgroundSecondary);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--textSecondary);
+  line-height: 1.6;
+}
+
+.error-help code {
+  background: var(--surface);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: var(--primary);
+  font-size: 13px;
 }
 
 /* Main Layout */
@@ -132,6 +300,19 @@
   flex-direction: column;
   overflow: hidden;
   position: relative;
+}
+
+/* Ensure canvas accepts drops */
+#gjs-editor {
+  pointer-events: auto !important;
+}
+
+:global(.gjs-cv-canvas) {
+  pointer-events: auto !important;
+}
+
+:global(.gjs-frame) {
+  pointer-events: auto !important;
 }
 
 .panel__basic-actions,
@@ -309,11 +490,22 @@
   position: relative;
 }
 
-/* Custom GrapesJS Styling */
-:global(.gjs-block) {
+/* Custom GrapesJS Styling - FORCE drag cursor */
+:global(.gjs-block),
+:global(.gjs-block *) {
   border-radius: 8px;
   transition: all 0.2s ease;
   border: 2px solid transparent;
+  cursor: grab !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+:global(.gjs-block:active),
+:global(.gjs-block:active *) {
+  cursor: grabbing !important;
 }
 
 :global(.gjs-block:hover) {
@@ -544,11 +736,17 @@
 #blocks-container {
   padding: 16px;
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   min-height: 0;
   flex: 1;
   box-sizing: border-box;
+  pointer-events: auto !important;
+}
+
+/* Ensure block elements are interactive */
+#blocks-container * {
+  pointer-events: auto !important;
 }
 
 :global(.gjs-blocks-c) {
@@ -576,11 +774,31 @@
 #layers-container {
   padding: 16px;
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   min-height: 0;
   flex: 1;
   box-sizing: border-box;
+  max-height: 100%;
+  position: relative;
+}
+
+/* Ensure layers content is scrollable */
+#layers-container .gjs-lm-items,
+#layers-container .gjs-lm-item {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Make sure GrapesJS layer manager content scrolls */
+:global(#layers-container .gjs-lm-items) {
+  max-height: none;
+  overflow: visible;
+}
+
+:global(#layers-container .gjs-lm-item) {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 :global(.gjs-layer) {
@@ -597,6 +815,28 @@
 :global(.gjs-layer.gjs-selected) {
   background: var(--surface);
   border-left: 3px solid var(--text);
+}
+
+/* Ensure GrapesJS layer manager wrapper is scrollable */
+:global(#layers-container .gjs-lm) {
+  height: 100%;
+  overflow: visible;
+}
+
+:global(#layers-container .gjs-lm-wrapper) {
+  height: 100%;
+  overflow: visible;
+}
+
+/* Make layer items scrollable within container */
+:global(#layers-container .gjs-lm-items) {
+  overflow: visible;
+  max-height: none;
+}
+
+/* Ensure proper scrolling for nested layers */
+:global(#layers-container .gjs-lm-item-children) {
+  overflow: visible;
 }
 
 /* Style Manager */

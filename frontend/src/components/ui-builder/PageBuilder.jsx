@@ -1,15 +1,29 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import grapesjs from 'grapesjs';
-import 'grapesjs/dist/css/grapes.min.css';
 import { useTheme } from '../../theme';
 import { useNavigation } from '../../router/AppRouter';
-import { FiGrid, FiLayout, FiSun, FiMoon } from 'react-icons/fi';
-import { getGrapesConfig } from './grapesConfig';
 import PageBuilderToolbar from './PageBuilderToolbar';
 import WidgetImportModal from './WidgetImportModal';
 import CodeExportModal from './CodeExportModal';
 import ProjectManager from './ProjectManager';
 import './PageBuilder.css';
+
+// Lazy load grapesjs to handle missing dependency
+let grapesjs = null;
+let grapesjsLoaded = false;
+
+const loadGrapesJS = async () => {
+  if (grapesjsLoaded) return grapesjs;
+  try {
+    const grapesjsModule = await import('grapesjs');
+    await import('grapesjs/dist/css/grapes.min.css');
+    grapesjs = grapesjsModule.default;
+    grapesjsLoaded = true;
+    return grapesjs;
+  } catch (error) {
+    console.warn('GrapesJS not available:', error);
+    return null;
+  }
+};
 
 function PageBuilder() {
   const { theme, toggleTheme } = useTheme();
@@ -28,101 +42,112 @@ function PageBuilder() {
 
   // Initialize GrapesJS
   useEffect(() => {
-    if (!editorRef.current) {
-      // Helper function to initialize GrapesJS commands
-      const setupGrapesJSCommands = (grapes) => {
-        grapes.Commands.add('set-device-desktop', {
-          run: editor => {
-            editor.setDevice('Desktop');
-            setActiveDevice('Desktop');
-          }
-        });
-        
-        grapes.Commands.add('set-device-tablet', {
-          run: editor => {
-            editor.setDevice('Tablet');
-            setActiveDevice('Tablet');
-          }
-        });
-        
-        grapes.Commands.add('set-device-mobile', {
-          run: editor => {
-            editor.setDevice('Mobile');
-            setActiveDevice('Mobile');
-          }
-        });
-        
-        grapes.Commands.add('show-blocks', {
-          run: () => setActivePanel('blocks')
-        });
-        
-        grapes.Commands.add('show-layers', {
-          run: () => setActivePanel('layers')
-        });
-        
-        // Track changes
-        grapes.on('change', () => {
-          setHasChanges(true);
-        });
-        
-        editorRef.current = grapes;
-        setEditor(grapes);
-      };
+    if (editorRef.current) return;
+    
+    let timer = null;
+    let cleanupTimer = null;
+    
+    // Helper function to initialize GrapesJS commands
+    const setupGrapesJSCommands = (grapes) => {
+      grapes.Commands.add('set-device-desktop', {
+        run: editor => {
+          editor.setDevice('Desktop');
+          setActiveDevice('Desktop');
+        }
+      });
+      
+      grapes.Commands.add('set-device-tablet', {
+        run: editor => {
+          editor.setDevice('Tablet');
+          setActiveDevice('Tablet');
+        }
+      });
+      
+      grapes.Commands.add('set-device-mobile', {
+        run: editor => {
+          editor.setDevice('Mobile');
+          setActiveDevice('Mobile');
+        }
+      });
+      
+      grapes.Commands.add('show-blocks', {
+        run: () => setActivePanel('blocks')
+      });
+      
+      grapes.Commands.add('show-layers', {
+        run: () => setActivePanel('layers')
+      });
+      
+      // Track changes
+      grapes.on('change', () => {
+        setHasChanges(true);
+      });
+      
+      editorRef.current = grapes;
+      setEditor(grapes);
+    };
+    
+    // Load grapesjs dynamically and initialize
+    loadGrapesJS().then((grapesjsLib) => {
+      if (!grapesjsLib) {
+        console.warn('GrapesJS is not available. Page Builder will not function.');
+        return;
+      }
       
       // Small delay to ensure DOM is ready
-      const timer = setTimeout(() => {
-        // Ensure all containers exist in DOM before initialization
-        const traitsContainer = document.getElementById('traits-container');
-        const stylesContainer = document.getElementById('styles-container');
-        const selectorsContainer = document.getElementById('selectors-container');
-        const stylesSectorsContainer = document.getElementById('styles-sectors-container');
-        
-        if (!traitsContainer || !stylesContainer || !selectorsContainer || !stylesSectorsContainer) {
-          console.error('GrapesJS containers not found, retrying...');
-          setTimeout(() => {
-            const config = getGrapesConfig(theme);
-            const grapes = grapesjs.init(config);
-            setupGrapesJSCommands(grapes);
-          }, 200);
-          return;
-        }
-        
-        const config = getGrapesConfig(theme);
-        const grapes = grapesjs.init(config);
-        setupGrapesJSCommands(grapes);
-        
-        // Load project from localStorage if exists
-        const savedProject = localStorage.getItem('gjsProject');
-        if (savedProject) {
-          try {
-            const project = JSON.parse(savedProject);
-            if (project.projectName) {
-              setProjectName(project.projectName);
-            }
-          } catch (error) {
-            console.error('Error loading project:', error);
+      timer = setTimeout(async () => {
+        try {
+          // Dynamically import getGrapesConfig
+          const { getGrapesConfig } = await import('./grapesConfig');
+          
+          // Ensure all containers exist in DOM before initialization
+          const traitsContainer = document.getElementById('traits-container');
+          const stylesContainer = document.getElementById('styles-container');
+          const selectorsContainer = document.getElementById('selectors-container');
+          const stylesSectorsContainer = document.getElementById('styles-sectors-container');
+          
+          if (!traitsContainer || !stylesContainer || !selectorsContainer || !stylesSectorsContainer) {
+            console.error('GrapesJS containers not found, retrying...');
+            cleanupTimer = setTimeout(() => {
+              const config = getGrapesConfig(theme);
+              const grapes = grapesjsLib.init(config);
+              setupGrapesJSCommands(grapes);
+            }, 200);
+            return;
           }
+          
+          const config = getGrapesConfig(theme);
+          const grapes = grapesjsLib.init(config);
+          setupGrapesJSCommands(grapes);
+          
+          // Load project from localStorage if exists
+          const savedProject = localStorage.getItem('gjsProject');
+          if (savedProject) {
+            try {
+              const project = JSON.parse(savedProject);
+              if (project.projectName) {
+                setProjectName(project.projectName);
+              }
+            } catch (error) {
+              console.error('Error loading project:', error);
+            }
+          }
+        } catch (error) {
+          console.error('Error initializing GrapesJS:', error);
         }
       }, 100);
-      
-      return () => {
-        clearTimeout(timer);
-        // Cleanup on unmount
-        if (editorRef.current) {
-          editorRef.current.destroy();
-          editorRef.current = null;
-        }
-      };
-    }
-
+    });
+    
     return () => {
       // Cleanup on unmount
+      if (timer) clearTimeout(timer);
+      if (cleanupTimer) clearTimeout(cleanupTimer);
       if (editorRef.current) {
         editorRef.current.destroy();
         editorRef.current = null;
       }
     };
-  }, []);
+  }, [theme]);
 
   // Update theme
   useEffect(() => {

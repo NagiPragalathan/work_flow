@@ -65,6 +65,20 @@ const MessageRenderer = ({ content, role }) => {
             return <h3 className="markdown-h3" {...props}>{children}</h3>;
           },
           p({ children, ...props }) {
+            const text = String(children);
+            // Enhanced file content detection
+            if (text.startsWith('File:') || text.includes('.md') || text.includes('.js') || text.includes('.py')) {
+              return (
+                <div className="file-content-wrapper">
+                  <div className="file-header">
+                    📄 {text.includes('File:') ? text.replace('File:', '').trim() : 'Documentation'}
+                  </div>
+                  <div className="documentation-content">
+                    {children}
+                  </div>
+                </div>
+              );
+            }
             return <p className="markdown-p" {...props}>{children}</p>;
           },
           ul({ children, ...props }) {
@@ -87,23 +101,6 @@ const MessageRenderer = ({ content, role }) => {
           },
           td({ children, ...props }) {
             return <td className="markdown-td" {...props}>{children}</td>;
-          },
-          // Enhanced file content detection
-          p({ children, ...props }) {
-            const text = String(children);
-            if (text.startsWith('File:') || text.includes('.md') || text.includes('.js') || text.includes('.py')) {
-              return (
-                <div className="file-content-wrapper">
-                  <div className="file-header">
-                    📄 {text.includes('File:') ? text.replace('File:', '').trim() : 'Documentation'}
-                  </div>
-                  <div className="documentation-content">
-                    {children}
-                  </div>
-                </div>
-              );
-            }
-            return <p className="markdown-p" {...props}>{children}</p>;
           }
         }}
       >

@@ -13,7 +13,7 @@ import '@xyflow/react/dist/style.css';
 import { 
   FiMenu, FiPlay, FiSquare, FiSave, FiFolder, FiTrash2, 
   FiSun, FiMoon, FiEdit3, FiMessageCircle, FiGrid, FiLink2, FiSettings, FiDownload,
-  FiMoreVertical, FiUpload, FiRefreshCw
+  FiMoreVertical, FiUpload, FiRefreshCw, FiType
 } from 'react-icons/fi';
 
 import {
@@ -27,6 +27,7 @@ import {
   ToastContainer,
   VerticalToolbar
 } from './components';
+import ExecutionsView from './components/execution/ExecutionsView';
 import AIChatbot from './components/ui/AIChatbot';
 import SettingsModal from './components/ui/SettingsModal';
 import ExportModal from './components/ui/ExportModal';
@@ -93,6 +94,7 @@ function WorkflowApp() {
   const [workflowName, setWorkflowName] = useState('Untitled Workflow');
   const [isSaved, setIsSaved] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
   const menuRef = useRef(null);
 
   // Close dropdown menu when clicking outside
@@ -476,12 +478,14 @@ function WorkflowApp() {
             
             const nodeExecution = {
               id: Date.now() + Math.random(),
+              nodeId: nodeId,
               nodeType: node.data.type,
               nodeName: node.data.label,
               status: 'error',
               startTime,
               endTime,
               source: 'test',
+              workflowExecutionId: `test-${Date.now()}`,
               output: `❌ ${errorMessage}`,
               duration: endTime - startTime
             };
@@ -518,12 +522,14 @@ function WorkflowApp() {
             
             const nodeExecution = {
               id: Date.now() + Math.random(),
+              nodeId: nodeId,
               nodeType: node.data.type,
               nodeName: node.data.label,
               status: 'error',
               startTime,
               endTime,
               source: 'test',
+              workflowExecutionId: `test-${Date.now()}`,
               output: `❌ ${errorMessage}`,
               duration: endTime - startTime
             };
@@ -577,12 +583,14 @@ function WorkflowApp() {
             
             const nodeExecution = {
               id: Date.now() + Math.random(),
+              nodeId: nodeId,
               nodeType: node.data.type,
               nodeName: node.data.label,
               status: 'completed',
               startTime,
               endTime,
               source: 'test',
+              workflowExecutionId: `test-${Date.now()}`,
               output: output,
               duration: endTime - startTime
             };
@@ -630,12 +638,14 @@ function WorkflowApp() {
         
         const nodeExecution = {
           id: Date.now() + Math.random(),
+          nodeId: nodeId,
           nodeType: node.data.type,
           nodeName: node.data.label,
           status: 'error',
           startTime,
           endTime,
           source: 'test',
+          workflowExecutionId: `test-${Date.now()}`,
           output: `Execution failed: ${error.message}`,
           duration: endTime - startTime
         };
@@ -883,12 +893,14 @@ function WorkflowApp() {
           // Add to execution history
           const nodeExecution = {
             id: Date.now() + Math.random(),
+            nodeId: nodeId,
             nodeType: node.data.type,
             nodeName: node.data.label,
             status: nodeState.status,
             startTime: new Date(),
             endTime: new Date(),
             source: 'chat',
+            workflowExecutionId: workflowId || `chat-${Date.now()}`,
             output: typeof nodeState.output === 'string' ? nodeState.output : JSON.stringify(nodeState.output, null, 2),
             duration: 100
           };
@@ -1422,12 +1434,14 @@ function WorkflowApp() {
               // Add to execution history for logs
               const nodeExecution = {
                 id: Date.now() + Math.random(),
+                nodeId: nodeId,
                 nodeType: node.data.type,
                 nodeName: node.data.label,
                 status: nodeState.status,
                 startTime: new Date(),
                 endTime: new Date(),
                 source: 'workflow',
+                workflowExecutionId: workflowId || `workflow-${Date.now()}`,
                 output: typeof nodeState.output === 'string' ? nodeState.output : JSON.stringify(nodeState.output, null, 2),
                 duration: 100
               };
@@ -2082,6 +2096,15 @@ function WorkflowApp() {
                     <button
                       className="dropdown-item"
                       onClick={() => {
+                        setRenameModalOpen(true);
+                        setMoreMenuOpen(false);
+                      }}
+                    >
+                      <FiType /> Rename
+                    </button>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
                         setSettingsOpen(true);
                         setMoreMenuOpen(false);
                       }}
@@ -2160,13 +2183,21 @@ function WorkflowApp() {
         </div>
         ) : (
           <div className="executions-view">
-            <ExecutionStatusBar 
+            <ExecutionsView
               executionHistory={executionHistory}
-              isExecuting={isExecuting}
-              currentExecution={currentExecution}
-              onClearHistory={handleClearHistory}
-              isExpanded={true}
-              onToggleExpanded={setLogsExpanded}
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={nodeTypes}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              reactFlowInstance={reactFlowInstance}
+              setReactFlowInstance={setReactFlowInstance}
+              handleSettingsClick={handleSettingsClick}
+              handleExecutionClick={handleExecutionClick}
+              deleteNode={deleteNode}
+              duplicateNode={duplicateNode}
+              handleChatClick={handleChatClick}
+              handleChatExecution={handleChatExecution}
             />
           </div>
         )}
@@ -2285,7 +2316,50 @@ function WorkflowApp() {
             isOpen={clearWorkspaceModalOpen} 
             onClose={() => setClearWorkspaceModalOpen(false)}
             onConfirm={confirmClearWorkspace}
-      />
+          />
+          
+          {/* Rename Modal */}
+          {renameModalOpen && (
+            <div className="modal-overlay" onClick={() => setRenameModalOpen(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <h3>Rename Workflow</h3>
+                  <button className="modal-close" onClick={() => setRenameModalOpen(false)}>
+                    ×
+                  </button>
+                </div>
+                <div className="modal-body">
+                  <input
+                    type="text"
+                    className="rename-input"
+                    value={workflowName}
+                    onChange={(e) => setWorkflowName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        saveWorkflow();
+                        setRenameModalOpen(false);
+                      }
+                    }}
+                    autoFocus
+                  />
+                </div>
+                <div className="modal-footer">
+                  <button className="modal-btn secondary" onClick={() => setRenameModalOpen(false)}>
+                    Cancel
+                  </button>
+                  <button 
+                    className="modal-btn primary" 
+                    onClick={() => {
+                      saveWorkflow();
+                      setRenameModalOpen(false);
+                    }}
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
     </div>
   );
 }

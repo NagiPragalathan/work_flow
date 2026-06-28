@@ -1,0 +1,151 @@
+// Prisma schema — ported from Django workflows/models.py
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  email        String?
+  passwordHash String   @map("password_hash")
+  firstName    String?  @map("first_name")
+  lastName     String?  @map("last_name")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  workflows         Workflow[]
+  memoryCollections MemoryCollection[]
+  credentials       Credential[]
+  exportedWorkflows ExportedWorkflow[]
+  uiProjects        UIBuilderProject[]
+
+  @@map("users")
+}
+
+model Workflow {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String   @default("")
+  nodes       Json     @default("[]")
+  edges       Json     @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  isActive    Boolean  @default(true) @map("is_active")
+
+  executions WorkflowExecution[]
+
+  @@index([userId, createdAt])
+  @@map("workflows")
+}
+
+model WorkflowExecution {
+  id             String    @id @default(uuid())
+  workflowId     String    @map("workflow_id")
+  workflow       Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  status         String
+  startedAt      DateTime  @default(now()) @map("started_at")
+  finishedAt     DateTime? @map("finished_at")
+  executionOrder Json      @default("[]") @map("execution_order")
+  nodeStates     Json      @default("{}") @map("node_states")
+  errors         Json      @default("{}")
+  triggerData    Json      @default("{}") @map("trigger_data")
+
+  @@index([workflowId, startedAt])
+  @@map("workflow_executions")
+}
+
+model MemoryCollection {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  workflowId  String   @map("workflow_id")
+  nodeId      String   @map("node_id")
+  windowSize  Int      @default(20) @map("window_size")
+  description String   @default("")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  messages MemoryMessage[]
+
+  @@unique([userId, name])
+  @@index([userId, createdAt])
+  @@map("memory_collections")
+}
+
+model MemoryMessage {
+  id           String           @id @default(uuid())
+  collectionId String           @map("collection_id")
+  collection   MemoryCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  role         String
+  content      String
+  timestamp    DateTime         @default(now())
+
+  @@index([collectionId, timestamp])
+  @@map("memory_messages")
+}
+
+model Credential {
+  id             String   @id @default(uuid())
+  userId         String?  @map("user_id")
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  credentialType String   @map("credential_type")
+  data           Json     @default("{}")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([userId, credentialType])
+  @@map("credentials")
+}
+
+model ExportedWorkflow {
+  id            String   @id @default(uuid())
+  userId        String?  @map("user_id")
+  user          User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  description   String   @default("")
+  version       String   @default("1.0.0")
+  exportType    String   @default("template") @map("export_type")
+  nodes         Json     @default("[]")
+  edges         Json     @default("[]")
+  tags          Json     @default("[]")
+  category      String   @default("")
+  author        String   @default("")
+  isPublic      Boolean  @default(false) @map("is_public")
+  isFeatured    Boolean  @default(false) @map("is_featured")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  exportedAt    DateTime @default(now()) @map("exported_at")
+  downloadCount Int      @default(0) @map("download_count")
+  importCount   Int      @default(0) @map("import_count")
+
+  @@index([userId, exportedAt])
+  @@index([exportType])
+  @@index([isPublic])
+  @@index([category])
+  @@map("exported_workflows")
+}
+
+model UIBuilderProject {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectName String   @map("project_name")
+  description String   @default("")
+  components  Json     @default("{}")
+  styles      Json     @default("{}")
+  assets      Json     @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  isActive    Boolean  @default(true) @map("is_active")
+
+  @@index([userId, updatedAt])
+  @@map("ui_builder_projects")
+}

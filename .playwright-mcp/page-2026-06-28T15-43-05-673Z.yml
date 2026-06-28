@@ -1,0 +1,224 @@
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - banner [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]: ⚡
+        - generic [ref=e17]:
+          - generic [ref=e18]: AgentFlow Web3
+          - generic [ref=e19]: n8n for Web3 · workflows + site builder
+      - generic [ref=e20]:
+        - button "Toggle theme" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - generic [ref=e24]: smoke2
+        - button "Sign out" [ref=e25] [cursor=pointer]:
+          - img [ref=e26]
+    - generic [ref=e29]:
+      - button "Workflows" [ref=e30] [cursor=pointer]:
+        - img [ref=e31]
+        - text: Workflows
+      - button "dApps" [ref=e36] [cursor=pointer]:
+        - img [ref=e37]
+        - text: dApps
+    - main [ref=e39]:
+      - generic [ref=e40]:
+        - generic [ref=e42]:
+          - heading "dApps" [level=2] [ref=e43]
+          - paragraph [ref=e44]: One-click Web3 apps — a ready UI wired to a live workflow. Open one, hit the button, it runs.
+        - heading "⚡ Ready dApps (UI + Workflow)" [level=3] [ref=e45]
+        - generic [ref=e46]:
+          - button "💰 Web3 Wallet Balance Checker Enter any wallet address and fetch its live ETH balance on-chain. Setting up…" [disabled] [ref=e242] [cursor=pointer]:
+            - generic [ref=e48]:
+              - generic [ref=e49]: 💰
+              - generic [ref=e50]: Web3
+            - generic [ref=e51]: Wallet Balance Checker
+            - generic [ref=e52]: Enter any wallet address and fetch its live ETH balance on-chain.
+            - generic [ref=e53]: Setting up…
+          - button "🪙 Web3 ERC-20 Token Balance Look up any ERC-20 token balance for any holder. Launch dApp" [ref=e56] [cursor=pointer]:
+            - generic [ref=e57]:
+              - generic [ref=e58]: 🪙
+              - generic [ref=e59]: Web3
+            - generic [ref=e60]: ERC-20 Token Balance
+            - generic [ref=e61]: Look up any ERC-20 token balance for any holder.
+            - generic [ref=e62]:
+              - text: Launch dApp
+              - img [ref=e63]
+          - button "📈 Web3 ETH Price Widget Live ETH/USD price pulled from a Chainlink price feed. Launch dApp" [ref=e65] [cursor=pointer]:
+            - generic [ref=e66]:
+              - generic [ref=e67]: 📈
+              - generic [ref=e68]: Web3
+            - generic [ref=e69]: ETH Price Widget
+            - generic [ref=e70]: Live ETH/USD price pulled from a Chainlink price feed.
+            - generic [ref=e71]:
+              - text: Launch dApp
+              - img [ref=e72]
+          - button "⛽ Web3 Gas Tracker One click to read the current network gas price. Launch dApp" [ref=e74] [cursor=pointer]:
+            - generic [ref=e75]:
+              - generic [ref=e76]: ⛽
+              - generic [ref=e77]: Web3
+            - generic [ref=e78]: Gas Tracker
+            - generic [ref=e79]: One click to read the current network gas price.
+            - generic [ref=e80]:
+              - text: Launch dApp
+              - img [ref=e81]
+          - button "🤖 Web3 + AI AI Web3 Assistant Ask anything — an AI agent answers (powered by Groq). Launch dApp" [ref=e83] [cursor=pointer]:
+            - generic [ref=e84]:
+              - generic [ref=e85]: 🤖
+              - generic [ref=e86]: Web3 + AI
+            - generic [ref=e87]: AI Web3 Assistant
+            - generic [ref=e88]: Ask anything — an AI agent answers (powered by Groq).
+            - generic [ref=e89]:
+              - text: Launch dApp
+              - img [ref=e90]
+        - heading "⚙️ Workflow Templates" [level=3] [ref=e92]
+        - generic [ref=e93]:
+          - button "💰 Web3 Wallet Balance Checker Read the native ETH balance of an address and report it. 3 nodes" [ref=e94] [cursor=pointer]:
+            - generic [ref=e95]:
+              - generic [ref=e96]: 💰
+              - generic [ref=e97]: Web3
+            - generic [ref=e98]: Wallet Balance Checker
+            - generic [ref=e99]: Read the native ETH balance of an address and report it.
+            - generic [ref=e100]:
+              - text: 3 nodes
+              - img [ref=e101]
+          - button "🪙 Web3 ERC-20 Token Balance Look up an ERC-20 token balance (symbol + decimals) for a holder. 3 nodes" [ref=e103] [cursor=pointer]:
+            - generic [ref=e104]:
+              - generic [ref=e105]: 🪙
+              - generic [ref=e106]: Web3
+            - generic [ref=e107]: ERC-20 Token Balance
+            - generic [ref=e108]: Look up an ERC-20 token balance (symbol + decimals) for a holder.
+            - generic [ref=e109]:
+              - text: 3 nodes
+              - img [ref=e110]
+          - button "📈 Web3 ETH Price (Chainlink) Fetch the latest ETH/USD price from a Chainlink price feed. 3 nodes" [ref=e112] [cursor=pointer]:
+            - generic [ref=e113]:
+              - generic [ref=e114]: 📈
+              - generic [ref=e115]: Web3
+            - generic [ref=e116]: ETH Price (Chainlink)
+            - generic [ref=e117]: Fetch the latest ETH/USD price from a Chainlink price feed.
+            - generic [ref=e118]:
+              - text: 3 nodes
+              - img [ref=e119]
+          - button "⛽ Web3 Gas Price Monitor On a schedule, read the current network gas price. 3 nodes" [ref=e121] [cursor=pointer]:
+            - generic [ref=e122]:
+              - generic [ref=e123]: ⛽
+              - generic [ref=e124]: Web3
+            - generic [ref=e125]: Gas Price Monitor
+            - generic [ref=e126]: On a schedule, read the current network gas price.
+            - generic [ref=e127]:
+              - text: 3 nodes
+              - img [ref=e128]
+          - button "💸 Web3 Send ETH Payment Send native currency using a connected wallet (testnet by default). Add your private key to the Wallet node. 4 nodes" [ref=e130] [cursor=pointer]:
+            - generic [ref=e131]:
+              - generic [ref=e132]: 💸
+              - generic [ref=e133]: Web3
+            - generic [ref=e134]: Send ETH Payment
+            - generic [ref=e135]: Send native currency using a connected wallet (testnet by default). Add your private key to the Wallet node.
+            - generic [ref=e136]:
+              - text: 4 nodes
+              - img [ref=e137]
+          - button "🔁 Web3 ERC-20 Token Transfer Transfer an ERC-20 token from your wallet to a recipient. 4 nodes" [ref=e139] [cursor=pointer]:
+            - generic [ref=e140]:
+              - generic [ref=e141]: 🔁
+              - generic [ref=e142]: Web3
+            - generic [ref=e143]: ERC-20 Token Transfer
+            - generic [ref=e144]: Transfer an ERC-20 token from your wallet to a recipient.
+            - generic [ref=e145]:
+              - text: 4 nodes
+              - img [ref=e146]
+          - button "🖼️ Web3 NFT Transfer (ERC-721) Transfer an ERC-721 NFT to another wallet. 4 nodes" [ref=e148] [cursor=pointer]:
+            - generic [ref=e149]:
+              - generic [ref=e150]: 🖼️
+              - generic [ref=e151]: Web3
+            - generic [ref=e152]: NFT Transfer (ERC-721)
+            - generic [ref=e153]: Transfer an ERC-721 NFT to another wallet.
+            - generic [ref=e154]:
+              - text: 4 nodes
+              - img [ref=e155]
+          - button "🧠 Web3 + AI On-chain Event → AI Summary Fetch recent contract events and have an AI agent summarize them. 4 nodes" [ref=e157] [cursor=pointer]:
+            - generic [ref=e158]:
+              - generic [ref=e159]: 🧠
+              - generic [ref=e160]: Web3 + AI
+            - generic [ref=e161]: On-chain Event → AI Summary
+            - generic [ref=e162]: Fetch recent contract events and have an AI agent summarize them.
+            - generic [ref=e163]:
+              - text: 4 nodes
+              - img [ref=e164]
+          - button "🤖 Web3 + AI AI Web3 Assistant (chat + tools + memory) A chat assistant with conversation memory and web search, ready to answer Web3 questions. 6 nodes" [ref=e166] [cursor=pointer]:
+            - generic [ref=e167]:
+              - generic [ref=e168]: 🤖
+              - generic [ref=e169]: Web3 + AI
+            - generic [ref=e170]: AI Web3 Assistant (chat + tools + memory)
+            - generic [ref=e171]: A chat assistant with conversation memory and web search, ready to answer Web3 questions.
+            - generic [ref=e172]:
+              - text: 6 nodes
+              - img [ref=e173]
+          - button "🌉 Web2 → Web3 Webhook → Smart Contract Write Web2 webhook triggers an on-chain transaction — the bridge from any app into Web3. 4 nodes" [ref=e175] [cursor=pointer]:
+            - generic [ref=e176]:
+              - generic [ref=e177]: 🌉
+              - generic [ref=e178]: Web2 → Web3
+            - generic [ref=e179]: Webhook → Smart Contract Write
+            - generic [ref=e180]: Web2 webhook triggers an on-chain transaction — the bridge from any app into Web3.
+            - generic [ref=e181]:
+              - text: 4 nodes
+              - img [ref=e182]
+        - heading "Website Templates" [level=3] [ref=e184]:
+          - img [ref=e185]
+          - text: Website Templates
+        - generic [ref=e187]:
+          - 'button "🌐 Website Web3 SaaS Landing Premium landing: sticky nav, gradient hero, stats, features, steps, CTA, footer. Open in Page Builder" [ref=e188] [cursor=pointer]':
+            - generic [ref=e189]:
+              - generic [ref=e190]: 🌐
+              - generic [ref=e191]: Website
+            - generic [ref=e192]: Web3 SaaS Landing
+            - generic [ref=e193]: "Premium landing: sticky nav, gradient hero, stats, features, steps, CTA, footer."
+            - generic [ref=e194]:
+              - text: Open in Page Builder
+              - img [ref=e195]
+          - button "🌐 Website NFT Mint Page Two-column mint hero with live progress bar, quantity, mint + connect actions. Open in Page Builder" [ref=e197] [cursor=pointer]:
+            - generic [ref=e198]:
+              - generic [ref=e199]: 🌐
+              - generic [ref=e200]: Website
+            - generic [ref=e201]: NFT Mint Page
+            - generic [ref=e202]: Two-column mint hero with live progress bar, quantity, mint + connect actions.
+            - generic [ref=e203]:
+              - text: Open in Page Builder
+              - img [ref=e204]
+          - 'button "🌐 Website Token Dashboard Portfolio dashboard: total value, holdings table, refresh bound to a workflow. Open in Page Builder" [ref=e206] [cursor=pointer]':
+            - generic [ref=e207]:
+              - generic [ref=e208]: 🌐
+              - generic [ref=e209]: Website
+            - generic [ref=e210]: Token Dashboard
+            - generic [ref=e211]: "Portfolio dashboard: total value, holdings table, refresh bound to a workflow."
+            - generic [ref=e212]:
+              - text: Open in Page Builder
+              - img [ref=e213]
+          - 'button "🌐 Website DAO Governance Governance portal: stats, active proposals with vote actions wired to workflows. Open in Page Builder" [ref=e215] [cursor=pointer]':
+            - generic [ref=e216]:
+              - generic [ref=e217]: 🌐
+              - generic [ref=e218]: Website
+            - generic [ref=e219]: DAO Governance
+            - generic [ref=e220]: "Governance portal: stats, active proposals with vote actions wired to workflows."
+            - generic [ref=e221]:
+              - text: Open in Page Builder
+              - img [ref=e222]
+          - button "🌐 Website Web3 Action Button A single button that triggers a workflow — the element→action core. Open in Page Builder" [ref=e224] [cursor=pointer]:
+            - generic [ref=e225]:
+              - generic [ref=e226]: 🌐
+              - generic [ref=e227]: Website
+            - generic [ref=e228]: Web3 Action Button
+            - generic [ref=e229]: A single button that triggers a workflow — the element→action core.
+            - generic [ref=e230]:
+              - text: Open in Page Builder
+              - img [ref=e231]
+          - button "🌐 Website Connect Wallet Button A wallet-connect button using the browser provider. Open in Page Builder" [ref=e233] [cursor=pointer]:
+            - generic [ref=e234]:
+              - generic [ref=e235]: 🌐
+              - generic [ref=e236]: Website
+            - generic [ref=e237]: Connect Wallet Button
+            - generic [ref=e238]: A wallet-connect button using the browser provider.
+            - generic [ref=e239]:
+              - text: Open in Page Builder
+              - img [ref=e240]

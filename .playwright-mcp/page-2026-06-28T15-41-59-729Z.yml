@@ -1,0 +1,338 @@
+- generic [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e406]:
+    - generic [ref=e407]:
+      - generic [ref=e408]:
+        - heading "Nodes" [level=3] [ref=e409]
+        - button [ref=e410] [cursor=pointer]:
+          - img [ref=e411]
+      - generic [ref=e414]:
+        - img [ref=e415]
+        - textbox "Search nodes..." [ref=e418]
+      - generic [ref=e419]:
+        - generic [ref=e421] [cursor=pointer]:
+          - img [ref=e423]
+          - generic [ref=e425]:
+            - heading "Triggers" [level=4] [ref=e426]
+            - paragraph [ref=e427]: Start your workflow with triggers
+          - generic [ref=e428]: "4"
+        - generic [ref=e429]:
+          - generic [ref=e430] [cursor=pointer]:
+            - img [ref=e432]
+            - generic [ref=e434]:
+              - heading "AI" [level=4] [ref=e435]
+              - paragraph [ref=e436]: Build autonomous agents, summarize or search documents, etc.
+            - generic [ref=e437]: "9"
+          - generic [ref=e438]:
+            - generic [ref=e439]:
+              - img [ref=e441]
+              - generic [ref=e443]:
+                - generic [ref=e444]: AI Agent
+                - generic [ref=e445]: Generates an action plan and executes it. Can use external tools.
+            - generic [ref=e446]:
+              - img [ref=e448]
+              - generic [ref=e450]:
+                - generic [ref=e451]: OpenAI
+                - generic [ref=e452]: Message an assistant or GPT, analyze images, generate audio, etc.
+            - generic [ref=e453]:
+              - img [ref=e455]
+              - generic [ref=e457]:
+                - generic [ref=e458]: Anthropic
+                - generic [ref=e459]: Interact with Anthropic AI models (Claude)
+            - generic [ref=e460]:
+              - img [ref=e462]
+              - generic [ref=e464]:
+                - generic [ref=e465]: Google Gemini
+                - generic [ref=e466]: Interact with Google Gemini AI models
+            - generic [ref=e467]:
+              - img [ref=e469]
+              - generic [ref=e471]:
+                - generic [ref=e472]: Question and Answer Chain
+                - generic [ref=e473]: Answer questions about retrieved documents
+            - generic [ref=e474]:
+              - img [ref=e476]
+              - generic [ref=e479]:
+                - generic [ref=e480]: Summarization Chain
+                - generic [ref=e481]: Transforms text into a concise summary
+            - generic [ref=e482]:
+              - img [ref=e484]
+              - generic [ref=e486]:
+                - generic [ref=e487]: Information Extractor
+                - generic [ref=e488]: Extract information from text in a structured format
+            - generic [ref=e489]:
+              - img [ref=e491]
+              - generic [ref=e494]:
+                - generic [ref=e495]: Text Classifier
+                - generic [ref=e496]: Classify your text into distinct categories
+            - generic [ref=e497]:
+              - img [ref=e499]
+              - generic [ref=e502]:
+                - generic [ref=e503]: Sentiment Analysis
+                - generic [ref=e504]: Analyze the sentiment of your text
+        - generic [ref=e506] [cursor=pointer]:
+          - img [ref=e508]
+          - generic [ref=e510]:
+            - heading "Web3" [level=4] [ref=e511]
+            - paragraph [ref=e512]: Read/write smart contracts, transfer tokens, query chains and react to on-chain events
+          - generic [ref=e513]: "15"
+        - generic [ref=e515] [cursor=pointer]:
+          - img [ref=e517]
+          - generic [ref=e519]:
+            - heading "Chat Models" [level=4] [ref=e520]
+            - paragraph [ref=e521]: Large language models for conversation and text generation
+          - generic [ref=e522]: "6"
+        - generic [ref=e524] [cursor=pointer]:
+          - img [ref=e526]
+          - generic [ref=e528]:
+            - heading "Memory" [level=4] [ref=e529]
+            - paragraph [ref=e530]: Store and retrieve information, context, and conversation history
+          - generic [ref=e531]: "4"
+        - generic [ref=e533] [cursor=pointer]:
+          - img [ref=e535]
+          - generic [ref=e537]:
+            - heading "Document Loaders" [level=4] [ref=e538]
+            - paragraph [ref=e539]: Load and parse various document formats
+          - generic [ref=e540]: "3"
+        - generic [ref=e542] [cursor=pointer]:
+          - img [ref=e544]
+          - generic [ref=e546]:
+            - heading "Vector Stores" [level=4] [ref=e547]
+            - paragraph [ref=e548]: Vector databases for semantic search and retrieval
+          - generic [ref=e549]: "3"
+        - generic [ref=e551] [cursor=pointer]:
+          - img [ref=e553]
+          - generic [ref=e555]:
+            - heading "Tools" [level=4] [ref=e556]
+            - paragraph [ref=e557]: External tools and utilities for enhanced functionality
+          - generic [ref=e558]: "4"
+        - generic [ref=e560] [cursor=pointer]:
+          - img [ref=e562]
+          - generic [ref=e564]:
+            - heading "Actions" [level=4] [ref=e565]
+            - paragraph [ref=e566]: Do something in an app or service like Google Sheets, Telegram or Notion
+          - generic [ref=e567]: "2"
+        - generic [ref=e569] [cursor=pointer]:
+          - img [ref=e571]
+          - generic [ref=e573]:
+            - heading "Data" [level=4] [ref=e574]
+            - paragraph [ref=e575]: Manipulate, filter or convert data
+          - generic [ref=e576]: "4"
+        - generic [ref=e578] [cursor=pointer]:
+          - img [ref=e580]
+          - generic [ref=e582]:
+            - heading "Flow" [level=4] [ref=e583]
+            - paragraph [ref=e584]: Branch, merge or loop the flow, etc.
+          - generic [ref=e585]: "3"
+        - generic [ref=e587] [cursor=pointer]:
+          - img [ref=e589]
+          - generic [ref=e591]:
+            - heading "Output" [level=4] [ref=e592]
+            - paragraph [ref=e593]: Send output data to various destinations
+          - generic [ref=e594]: "2"
+    - generic [ref=e595]:
+      - generic [ref=e596]:
+        - generic [ref=e597]:
+          - button "Toggle Node Library" [ref=e598] [cursor=pointer]:
+            - img [ref=e599]
+          - button "Back to Dashboard" [ref=e600] [cursor=pointer]:
+            - img [ref=e601]
+          - generic [ref=e604]:
+            - button "Workflow Builder" [ref=e605] [cursor=pointer]:
+              - img [ref=e606]
+              - generic [ref=e611]: Workflow Builder
+            - button "Page Builder" [ref=e612] [cursor=pointer]:
+              - img [ref=e613]
+              - generic [ref=e615]: Page Builder
+        - generic [ref=e616]:
+          - button "Fit" [active] [ref=e617] [cursor=pointer]:
+            - img [ref=e618]
+            - text: Fit
+          - button "Execute" [ref=e620] [cursor=pointer]:
+            - img [ref=e621]
+            - text: Execute
+        - generic [ref=e623]:
+          - generic [ref=e624]:
+            - generic [ref=e625]:
+              - img [ref=e627]
+              - generic [ref=e632]:
+                - generic [ref=e633]: "5"
+                - generic [ref=e634]: Nodes
+            - generic [ref=e635]:
+              - img [ref=e637]
+              - generic [ref=e639]:
+                - generic [ref=e640]: "4"
+                - generic [ref=e641]: Connections
+          - button "Settings" [ref=e642] [cursor=pointer]:
+            - img [ref=e643]
+          - button "Switch to dark mode" [ref=e646] [cursor=pointer]:
+            - img [ref=e647]
+      - application [ref=e650]:
+        - generic [ref=e652]:
+          - generic:
+            - generic:
+              - img
+              - img:
+                - group "Edge from n1 to s1" [ref=e653] [cursor=pointer]
+              - img:
+                - group "Edge from s1 to t1"
+              - img:
+                - group "Edge from t1 to o1" [ref=e656] [cursor=pointer]
+            - generic:
+              - group [ref=e659]:
+                - generic [ref=e795]:
+                  - generic [ref=e796]:
+                    - img [ref=e798]
+                    - generic [ref=e803]:
+                      - generic [ref=e804]: Start
+                      - generic [ref=e805]: Triggers
+                  - generic [ref=e806]:
+                    - generic "Ready" [ref=e807]:
+                      - img [ref=e808]
+                    - button "View Output" [ref=e811] [cursor=pointer]:
+                      - img [ref=e812]
+                    - button "Settings" [ref=e814] [cursor=pointer]:
+                      - img [ref=e815]
+                  - generic "Output" [ref=e818]
+              - group [ref=e660]:
+                - generic [ref=e819]:
+                  - generic [ref=e820]:
+                    - img [ref=e822]
+                    - generic [ref=e824]:
+                      - generic [ref=e825]: Wallet
+                      - generic [ref=e826]: Web3
+                  - generic [ref=e827]:
+                    - generic "Ready" [ref=e828]:
+                      - img [ref=e829]
+                    - button "View Output" [ref=e832] [cursor=pointer]:
+                      - img [ref=e833]
+                    - button "Settings" [ref=e835] [cursor=pointer]:
+                      - img [ref=e836]
+                  - generic "Wallet" [ref=e839]
+              - group [ref=e661]:
+                - generic [ref=e840]:
+                  - generic "Input" [ref=e841]
+                  - generic [ref=e842]:
+                    - img [ref=e844]
+                    - generic [ref=e847]:
+                      - generic [ref=e848]: Send ETH
+                      - generic [ref=e849]: Web3
+                  - generic [ref=e850]:
+                    - generic "Ready" [ref=e851]:
+                      - img [ref=e852]
+                    - button "View Output" [ref=e855] [cursor=pointer]:
+                      - img [ref=e856]
+                    - button "Settings" [ref=e858] [cursor=pointer]:
+                      - img [ref=e859]
+                  - generic "Output" [ref=e862]
+              - group [ref=e662]:
+                - generic [ref=e863]:
+                  - generic "Input" [ref=e864]
+                  - generic [ref=e865]:
+                    - img [ref=e867]
+                    - generic [ref=e869]:
+                      - generic [ref=e870]: Tx Status
+                      - generic [ref=e871]: Web3
+                  - generic [ref=e872]:
+                    - generic "Ready" [ref=e873]:
+                      - img [ref=e874]
+                    - button "View Output" [ref=e877] [cursor=pointer]:
+                      - img [ref=e878]
+                    - button "Settings" [ref=e880] [cursor=pointer]:
+                      - img [ref=e881]
+                  - generic "Output" [ref=e884]
+              - group [ref=e663]:
+                - generic [ref=e885]:
+                  - generic [ref=e887]:
+                    - generic [ref=e888]:
+                      - img [ref=e889]
+                      - generic [ref=e892]: Content Viewer
+                    - generic [ref=e893]:
+                      - button "Copy content" [ref=e894] [cursor=pointer]:
+                        - img [ref=e895]
+                      - button "Download as markdown" [ref=e898] [cursor=pointer]:
+                        - img [ref=e899]
+                  - generic [ref=e903]:
+                    - img [ref=e904]
+                    - paragraph [ref=e907]: No content to display
+                    - paragraph [ref=e908]: Connect a node to see content here
+        - img
+        - generic "Control Panel" [ref=e664]:
+          - button "Zoom In" [ref=e665] [cursor=pointer]:
+            - img [ref=e666]
+          - button "Zoom Out" [ref=e668] [cursor=pointer]:
+            - img [ref=e669]
+          - button "Fit View" [ref=e671] [cursor=pointer]:
+            - img [ref=e672]
+          - button "Toggle Interactivity" [ref=e674] [cursor=pointer]:
+            - img [ref=e675]
+        - img "Mini Map" [ref=e678]
+        - link "React Flow attribution" [ref=e685] [cursor=pointer]:
+          - /url: https://reactflow.dev/attribution
+          - text: React Flow
+    - generic [ref=e688]:
+      - generic [ref=e689]:
+        - generic [ref=e690]: Logs
+        - generic [ref=e691]: Success in 100ms
+      - generic [ref=e692]:
+        - button "Clear execution" [ref=e693] [cursor=pointer]:
+          - img [ref=e694]
+          - text: Clear execution
+        - button "More options" [ref=e696] [cursor=pointer]:
+          - img [ref=e697]
+        - button "Expand logs" [ref=e701] [cursor=pointer]:
+          - img [ref=e702]
+    - generic [ref=e704]:
+      - generic "Browse Templates" [ref=e705] [cursor=pointer]:
+        - img [ref=e706]
+      - generic "Export Workflow" [ref=e711] [cursor=pointer]:
+        - img [ref=e712]
+      - generic "Import Workflow" [ref=e715] [cursor=pointer]:
+        - img [ref=e716]
+      - generic "Clear Workspace" [ref=e719] [cursor=pointer]:
+        - img [ref=e720]
+      - generic "Add Notes" [ref=e722] [cursor=pointer]:
+        - img [ref=e723]
+      - generic "AI/Magic features" [ref=e725] [cursor=pointer]:
+        - img [ref=e726]
+    - generic [ref=e739]:
+      - generic [ref=e740]:
+        - generic [ref=e741]:
+          - img [ref=e742]
+          - generic [ref=e744]: AI Assistant
+        - generic [ref=e745]:
+          - button "Conversation history" [ref=e746] [cursor=pointer]:
+            - img [ref=e747]
+          - button "New conversation" [ref=e750] [cursor=pointer]:
+            - img [ref=e751]
+          - button "Clear" [ref=e752] [cursor=pointer]
+          - button [ref=e753] [cursor=pointer]:
+            - img [ref=e754]
+      - generic [ref=e757]:
+        - generic [ref=e758]:
+          - img [ref=e760]
+          - generic [ref=e762]:
+            - generic [ref=e764]: Hello! I'm your AI assistant for the workflow builder. I can help you with creating workflows, understanding nodes, and answering questions about the platform. How can I assist you today?
+            - generic [ref=e765]: 9:11:28 PM
+        - generic [ref=e766]:
+          - img [ref=e768]
+          - generic [ref=e770]:
+            - generic [ref=e772]: ⚠️ Please configure your AI settings first. Click the Settings button (⚙️) to set up your API key and model.
+            - generic [ref=e773]: 9:11:29 PM
+        - generic [ref=e774]:
+          - img [ref=e776]
+          - generic [ref=e778]:
+            - generic [ref=e780]: ⚠️ Please configure your AI settings first. Click the Settings button (⚙️) to set up your API key and model.
+            - generic [ref=e781]: 9:11:29 PM
+      - generic [ref=e782]:
+        - generic [ref=e783]:
+          - button "🔄 What is a Workflow?" [ref=e784] [cursor=pointer]
+          - button "🛠️ Create Workflow" [ref=e785] [cursor=pointer]
+          - button "📦 Node Types" [ref=e786] [cursor=pointer]
+          - button "🔗 Connect Nodes" [ref=e787] [cursor=pointer]
+          - button "▶️ Execute Workflow" [ref=e788] [cursor=pointer]
+        - generic [ref=e789]:
+          - textbox "Ask me anything about workflows, nodes, or how to use this platform..." [ref=e790]
+          - button [disabled] [ref=e791]:
+            - img [ref=e792]

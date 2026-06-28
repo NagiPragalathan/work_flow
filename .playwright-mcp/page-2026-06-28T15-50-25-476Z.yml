@@ -1,0 +1,8 @@
+- generic [ref=e3]:
+  - generic [ref=e4]: 💰
+  - heading "Wallet Balance" [level=1] [ref=e5]
+  - paragraph [ref=e6]: Check the native ETH balance of any address.
+  - generic [ref=e7]: Wallet address
+  - textbox "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" [ref=e8]
+  - button "Check Balance" [ref=e9] [cursor=pointer]
+  - paragraph [ref=e10]: ⚡ Powered by an on-chain workflow

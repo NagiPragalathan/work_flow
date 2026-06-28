@@ -1,0 +1,44 @@
+/* Shared theme for AgentFlow Web3 report diagrams */
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { background:#ffffff; }
+body { font-family:"Segoe UI", Arial, Helvetica, sans-serif; color:#1f2937; }
+.stage { background:#ffffff; padding:34px 38px 30px; }
+.dtitle { text-align:center; font-weight:800; letter-spacing:.5px; color:#4338ca;
+  font-size:30px; }
+.dsub { text-align:center; color:#6b7280; font-size:15px; margin-top:6px; margin-bottom:8px; }
+
+/* layer band */
+.band { border:1.5px solid #e5e7eb; border-radius:14px; padding:14px 16px 16px;
+  margin-top:16px; position:relative; background:#fbfbff; }
+.band-head { position:absolute; top:-12px; left:18px; background:#eef2ff; color:#4338ca;
+  font-weight:700; font-size:13px; letter-spacing:.4px; padding:3px 12px; border-radius:20px;
+  border:1.5px solid #c7d2fe; text-transform:uppercase; }
+.row { display:flex; gap:14px; }
+.row.eq > * { flex:1; }
+
+/* card */
+.card { background:#ffffff; border:1.5px solid #e5e7eb; border-radius:12px; padding:12px 13px;
+  box-shadow:0 1px 2px rgba(16,24,40,.05); }
+.card .ic { font-size:20px; line-height:1; }
+.card .t { font-weight:700; font-size:14.5px; margin-top:7px; color:#111827; }
+.card .d { font-size:12px; color:#6b7280; margin-top:4px; line-height:1.35; }
+
+/* color accents */
+.c-violet { border-top:4px solid #6366f1; }
+.c-blue   { border-top:4px solid #3b82f6; }
+.c-cyan   { border-top:4px solid #06b6d4; }
+.c-green  { border-top:4px solid #10b981; }
+.c-amber  { border-top:4px solid #f59e0b; }
+.c-rose   { border-top:4px solid #f43f5e; }
+.c-slate  { border-top:4px solid #64748b; }
+
+.b-violet{ background:#eef2ff; } .b-blue{ background:#eff6ff; } .b-cyan{ background:#ecfeff; }
+.b-green{ background:#ecfdf5; } .b-amber{ background:#fffbeb; } .b-rose{ background:#fff1f2; }
+.b-slate{ background:#f8fafc; }
+
+.legend { display:flex; gap:22px; justify-content:center; align-items:center; flex-wrap:wrap;
+  margin-top:18px; border-top:1px dashed #d1d5db; padding-top:12px; font-size:12px; color:#4b5563; }
+.legend .k { display:flex; align-items:center; gap:7px; }
+.dot { width:12px; height:12px; border-radius:3px; display:inline-block; }
+
+.flowarrow { text-align:center; color:#9ca3af; font-size:22px; margin:6px 0; }

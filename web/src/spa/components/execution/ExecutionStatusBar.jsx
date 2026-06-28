@@ -68,10 +68,12 @@ const ExecutionStatusBar = ({ executionHistory, isExecuting, currentExecution, o
     });
   };
 
-  const filteredHistory = executionHistory.filter(execution => 
-    execution.nodeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    execution.nodeType.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredHistory = executionHistory.filter(execution => {
+    const term = (searchTerm || '').toLowerCase();
+    const name = (execution.nodeName || '').toLowerCase();
+    const type = (execution.nodeType || '').toLowerCase();
+    return name.includes(term) || type.includes(term);
+  });
 
   const handleClearHistory = () => {
     if (onClearHistory) {

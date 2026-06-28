@@ -48,6 +48,16 @@ function PageBuilder() {
     } catch { /* ignore */ }
     return null;
   });
+  // The workflow this page's action buttons run. Comes from a launched dApp and
+  // is persisted so publishing keeps the page wired even if the editor blanks
+  // the button's data-workflow attribute.
+  const [linkedWorkflowId] = useState(() => {
+    if (pendingSite?.workflowId) {
+      localStorage.setItem('linkedWorkflowId', pendingSite.workflowId);
+      return pendingSite.workflowId;
+    }
+    return localStorage.getItem('linkedWorkflowId') || null;
+  });
   const [editor, setEditor] = useState(null);
   const [projectData, setProjectData] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -256,7 +266,9 @@ function PageBuilder() {
 
       const page = await apiService.createUIProject({
         project_name: `${projectName || 'Page'} (published)`,
-        components: { html: fullHtml },
+        // Persist the linked workflow id so the live page re-injects it into the
+        // action buttons at serve time (the editor can blank data-workflow).
+        components: { html: fullHtml, workflowId: linkedWorkflowId || undefined },
       });
       const url = `${window.location.origin}/p/${page.id}`;
       try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
@@ -273,7 +285,7 @@ function PageBuilder() {
     } finally {
       setPublishing(false);
     }
-  }, [editor, projectName]);
+  }, [editor, projectName, linkedWorkflowId]);
 
   // Get page and component stats
   const [stats, setStats] = useState({ pages: 0, components: 0 });

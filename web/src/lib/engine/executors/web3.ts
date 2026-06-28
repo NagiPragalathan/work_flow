@@ -135,10 +135,13 @@ export class Web3NodeExecutor extends BaseNodeExecutor {
 
   private async getBalance(inputs: NodeInputs): Promise<NodeResult> {
     const { chain, rpc } = this.chainAndRpc(inputs);
+    // Incoming input (e.g. an address typed into a dApp UI) overrides the node's
+    // stored default, but the default lets the node run standalone from a manual
+    // trigger ("Start") and still produce output.
     const address =
-      this.getProperty<string>("address", "") ||
       (asObject(inputs.main).address as string) ||
-      (asObject(inputs.wallet).address as string);
+      (asObject(inputs.wallet).address as string) ||
+      this.getProperty<string>("address", "");
     if (!address || !isAddress(address)) {
       throw new NodeExecutionError("A valid address is required");
     }
@@ -311,12 +314,14 @@ export class Web3NodeExecutor extends BaseNodeExecutor {
 
   private async tokenBalance(inputs: NodeInputs): Promise<NodeResult> {
     const { chain, rpc } = this.chainAndRpc(inputs);
+    // Incoming input overrides stored defaults (so a dApp UI can supply token /
+    // holder), with the node's properties as the standalone fallback.
     const token =
-      this.getProperty<string>("token", "") || (asObject(inputs.main).token as string);
+      (asObject(inputs.main).token as string) || this.getProperty<string>("token", "");
     const address =
-      this.getProperty<string>("address", "") ||
       (asObject(inputs.main).address as string) ||
-      (asObject(inputs.wallet).address as string);
+      (asObject(inputs.wallet).address as string) ||
+      this.getProperty<string>("address", "");
     if (!token || !isAddress(token)) throw new NodeExecutionError("A valid token address is required");
     if (!address || !isAddress(address)) throw new NodeExecutionError("A valid holder address is required");
 

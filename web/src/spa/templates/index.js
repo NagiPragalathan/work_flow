@@ -39,7 +39,7 @@ export const workflowTemplates = [
   build(() => {
     const t = n('manual-trigger', 'Start', { message: 'Check balance' }, 80, 200);
     const b = n('web3-get-balance', 'Get Balance', { chain: 'ethereum', address: VITALIK, rpcUrl: MAINNET_RPC }, 400, 200);
-    const o = n('respond-to-chat', 'Reply', {}, 720, 200);
+    const o = n('readme-viewer', 'Reply', {}, 720, 200);
     return {
       name: 'Wallet Balance Checker',
       description: 'Read the native ETH balance of an address and report it.',
@@ -67,7 +67,7 @@ export const workflowTemplates = [
   build(() => {
     const t = n('manual-trigger', 'Start', {}, 80, 200);
     const p = n('web3-chainlink-price', 'ETH/USD Price', { chain: 'ethereum', feedAddress: ETH_USD_FEED, rpcUrl: MAINNET_RPC }, 400, 200);
-    const o = n('respond-to-chat', 'Reply', {}, 720, 200);
+    const o = n('readme-viewer', 'Reply', {}, 720, 200);
     return {
       name: 'ETH Price (Chainlink)',
       description: 'Fetch the latest ETH/USD price from a Chainlink price feed.',
@@ -81,7 +81,7 @@ export const workflowTemplates = [
   build(() => {
     const t = n('schedule', 'Every Hour', { interval: 'hours', value: 1 }, 80, 200);
     const g = n('web3-gas-price', 'Gas Price', { chain: 'ethereum', rpcUrl: MAINNET_RPC }, 400, 200);
-    const o = n('respond-to-chat', 'Report', {}, 720, 200);
+    const o = n('readme-viewer', 'Report', {}, 720, 200);
     return {
       name: 'Gas Price Monitor',
       description: 'On a schedule, read the current network gas price.',
@@ -96,7 +96,7 @@ export const workflowTemplates = [
     const t = n('manual-trigger', 'Start', {}, 60, 120);
     const w = n('web3-wallet', 'Wallet', { chain: 'sepolia', privateKey: '' }, 60, 320);
     const s = n('web3-send-transaction', 'Send ETH', { chain: 'sepolia', to: '0x0000000000000000000000000000000000000000', value: '0.001' }, 420, 200);
-    const o = n('respond-to-chat', 'Confirmation', {}, 760, 200);
+    const o = n('readme-viewer', 'Confirmation', {}, 760, 200);
     return {
       name: 'Send ETH Payment',
       description: 'Send native currency using a connected wallet (testnet by default). Add your private key to the Wallet node.',
@@ -126,7 +126,7 @@ export const workflowTemplates = [
     const t = n('manual-trigger', 'Start', {}, 60, 120);
     const w = n('web3-wallet', 'Wallet', { chain: 'sepolia', privateKey: '' }, 60, 320);
     const x = n('web3-nft-transfer', 'NFT Transfer', { chain: 'sepolia', contractAddress: '0x...', to: '0x...', tokenId: '1' }, 420, 200);
-    const o = n('respond-to-chat', 'Confirmation', {}, 760, 200);
+    const o = n('readme-viewer', 'Confirmation', {}, 760, 200);
     return {
       name: 'NFT Transfer (ERC-721)',
       description: 'Transfer an ERC-721 NFT to another wallet.',
@@ -141,7 +141,7 @@ export const workflowTemplates = [
     const tr = n('web3-event-trigger', 'Transfer Events', { chain: 'ethereum', contractAddress: USDC, eventName: 'Transfer', blockRange: 200, rpcUrl: MAINNET_RPC }, 60, 200);
     const m = n('groq-llama', 'Groq Llama', { model: 'llama-3.1-8b-instant', api_key: '' }, 60, 420);
     const a = n('ai-agent', 'Summarizer', { prompt: 'You analyze on-chain event logs. Summarize the recent activity in plain English with key numbers.' }, 440, 200);
-    const o = n('respond-to-chat', 'Summary', {}, 820, 200);
+    const o = n('readme-viewer', 'Summary', {}, 820, 200);
     return {
       name: 'On-chain Event → AI Summary',
       description: 'Fetch recent contract events and have an AI agent summarize them.',
@@ -158,7 +158,7 @@ export const workflowTemplates = [
     const mem = n('window-buffer-memory', 'Memory', { windowSize: 20 }, 320, 420);
     const tool = n('duckduckgo-search', 'Web Search', { maxResults: 5, region: 'us-en' }, 560, 420);
     const a = n('ai-agent', 'Web3 Assistant', { prompt: 'You are a helpful Web3 assistant. Use web search when needed and answer clearly.' }, 440, 180);
-    const o = n('respond-to-chat', 'Reply', {}, 820, 180);
+    const o = n('readme-viewer', 'Reply', {}, 820, 180);
     return {
       name: 'AI Web3 Assistant (chat + tools + memory)',
       description: 'A chat assistant with conversation memory and web search, ready to answer Web3 questions.',
@@ -179,7 +179,7 @@ export const workflowTemplates = [
     const t = n('webhook', 'Webhook', { path: '/onchain', method: ['POST'] }, 60, 120);
     const w = n('web3-wallet', 'Wallet', { chain: 'sepolia', privateKey: '' }, 60, 320);
     const wc = n('web3-write-contract', 'Write Contract', { chain: 'sepolia', contractAddress: '0x...', abi: '[]', functionName: 'mint', args: '[]' }, 420, 200);
-    const o = n('respond-to-chat', 'Tx Sent', {}, 780, 200);
+    const o = n('readme-viewer', 'Tx Sent', {}, 780, 200);
     return {
       name: 'Webhook → Smart Contract Write',
       description: 'Web2 webhook triggers an on-chain transaction — the bridge from any app into Web3.',

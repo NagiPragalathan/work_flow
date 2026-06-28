@@ -8,7 +8,7 @@ export class OutputNodeExecutor extends BaseNodeExecutor {
       case "respond-to-chat":
         return this.respondToChat(inputs, context);
       case "readme-viewer":
-        return this.readmeViewer(inputs);
+        return this.readmeViewer(inputs, context);
       default:
         throw new NodeExecutionError(`Unknown output node type: ${this.nodeType}`);
     }
@@ -38,7 +38,7 @@ export class OutputNodeExecutor extends BaseNodeExecutor {
     };
   }
 
-  private readmeViewer(inputs: NodeInputs): NodeResult {
+  private readmeViewer(inputs: NodeInputs, context: ExecContext): NodeResult {
     let content = "";
     if (inputs.main) {
       const input = inputs.main;
@@ -48,13 +48,17 @@ export class OutputNodeExecutor extends BaseNodeExecutor {
           (d.text as string) ||
           (d.content as string) ||
           (d.response as string) ||
-          JSON.stringify(d);
+          JSON.stringify(d, null, 2);
       } else {
         content = String(input);
       }
     }
     const title = this.getProperty<string>("title", "Content Viewer");
     this.logExecution(`Displaying content in README viewer: ${title}`);
+    // Also surface the content as the chat response so a workflow that ends in a
+    // README viewer still drives a dApp UI (which reads `chat_response`). One
+    // output node now works for both the editor canvas and a linked page.
+    context.chat_response = content;
     return {
       main: {
         title,

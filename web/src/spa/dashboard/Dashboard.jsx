@@ -95,8 +95,15 @@ export default function Dashboard() {
   useEffect(() => { loadWorkflows(); }, [loadWorkflows]);
 
   const openWorkflow = (wf) => {
-    if (wf) localStorage.setItem('openWorkflowId', wf.id);
-    else localStorage.removeItem('openWorkflowId');
+    if (wf) {
+      localStorage.setItem('openWorkflowId', wf.id);
+    } else {
+      // New workflow: start from a clean canvas (clear the last restored one).
+      localStorage.removeItem('openWorkflowId');
+      localStorage.removeItem('savedWorkflow');
+      localStorage.removeItem('workflowName');
+      localStorage.removeItem('currentWorkflowId');
+    }
     localStorage.removeItem('pendingWorkflowTemplate');
     navigateToBuilder('workflow');
   };
@@ -125,14 +132,15 @@ export default function Dashboard() {
       });
       // 2) Wire that workflow ID into the UI's action buttons.
       const wiredHtml = bundle.site.html.split('__WF__').join(created.id);
-      // 3) Save the page and open the live, runnable dApp in a new tab.
+      // 3) Save the page (with its linked workflow id) and open the live dApp.
       const page = await apiService.createUIProject({
         project_name: bundle.name,
-        components: { html: wiredHtml },
+        components: { html: wiredHtml, workflowId: created.id },
       });
       window.open(`/p/${page.id}`, '_blank');
-      // 4) Also load it into the Page Builder for editing.
-      localStorage.setItem('pendingSiteTemplate', JSON.stringify({ name: bundle.name, html: wiredHtml }));
+      // 4) Also load it into the Page Builder for editing, carrying the link so
+      //    re-publishing keeps the buttons wired.
+      localStorage.setItem('pendingSiteTemplate', JSON.stringify({ name: bundle.name, html: wiredHtml, workflowId: created.id }));
       loadWorkflows();
     } catch (e) {
       alert('Failed to set up dApp: ' + e.message);

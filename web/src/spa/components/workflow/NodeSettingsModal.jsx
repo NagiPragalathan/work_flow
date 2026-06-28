@@ -11,23 +11,26 @@ const NodeSettingsModal = ({ node, nodes, edges, onUpdate, onClose, onExecuteNod
   const [mockOutputData, setMockOutputData] = useState(null);
   const [isExecuting, setIsExecuting] = useState(false);
 
-  if (!node || !node.data) return null;
+  const nodeTypeDef = node?.data ? nodeTypeDefinitions[node.data.type] : null;
+  const isTriggerNode = node?.data?.type === 'manual-trigger' ||
+                       node?.data?.type === 'when-chat-received' ||
+                       node?.data?.type === 'webhook' ||
+                       node?.data?.type === 'schedule';
 
-  const nodeTypeDef = nodeTypeDefinitions[node.data.type];
-  const isTriggerNode = node.data.type === 'manual-trigger' || 
-                       node.data.type === 'when-chat-received' || 
-                       node.data.type === 'webhook' || 
-                       node.data.type === 'schedule';
-
-  // Get input data from previous nodes
+  // Get input data from previous nodes. Hooks must run on every render, so this
+  // effect (and all hooks above) stay before the early null-return below.
   useEffect(() => {
+    if (!node || !node.data) {
+      setInputData(null);
+      return;
+    }
     if (isTriggerNode) {
       setInputData(null);
       return;
     }
 
-    // Find nodes that connect to this node
-    const inputEdges = edges.filter(edge => edge.target === node.id);
+    // Find nodes that connect to this node (props may be undefined).
+    const inputEdges = (edges || []).filter(edge => edge.target === node.id);
     if (inputEdges.length === 0) {
       setInputData(null);
       return;
@@ -37,7 +40,7 @@ const NodeSettingsModal = ({ node, nodes, edges, onUpdate, onClose, onExecuteNod
     setInputData({
       hasInput: true,
       sourceNodes: inputEdges.map(edge => {
-        const sourceNode = nodes.find(n => n.id === edge.source);
+        const sourceNode = (nodes || []).find(n => n.id === edge.source);
         return {
           id: edge.source,
           label: sourceNode?.data?.label || 'Unknown',
@@ -46,6 +49,9 @@ const NodeSettingsModal = ({ node, nodes, edges, onUpdate, onClose, onExecuteNod
       })
     });
   }, [node, nodes, edges, isTriggerNode]);
+
+  // Safe to bail now that all hooks have run unconditionally.
+  if (!node || !node.data) return null;
 
   const handleExecutePreviousNodes = async () => {
     if (!inputData || !inputData.sourceNodes) return;

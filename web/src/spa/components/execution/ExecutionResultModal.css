@@ -1,15 +1,35 @@
+/* The app's theme provider only sets data-theme + JS colors; it never defines
+   these CSS vars. Without solid values here, var(--bg-primary) resolves to
+   nothing and the panels render transparent (the "glassmorphism" look). Define
+   solid values scoped to the modal so it's fully opaque and flat. */
+.execution-result-overlay {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f4f6;
+  --border-color: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --primary-color: #8b5cf6;
+}
+[data-theme="dark"] .execution-result-overlay {
+  --bg-primary: #16181d;
+  --bg-secondary: #21242b;
+  --border-color: #313640;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9aa3b2;
+  --primary-color: #a78bfa;
+}
+
 .execution-result-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(17, 24, 39, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  backdrop-filter: blur(4px);
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -170,7 +190,7 @@
 }
 
 .chat-response-section {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  background: var(--bg-secondary);
 }
 
 .chat-response-box {
@@ -346,7 +366,107 @@
   border-top: 1px solid var(--border-color);
 }
 
+/* ---------- Refined result UI ---------- */
+.execution-result-header {
+  position: relative;
+}
+.execution-result-header::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 3px;
+  background: var(--border-color);
+}
+.execution-result-header.success::after { background: linear-gradient(90deg, #10b981, #34d399); }
+.execution-result-header.error::after { background: linear-gradient(90deg, #ef4444, #f87171); }
+.execution-result-header.running::after { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+
+.erm-status-ring {
+  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+.erm-status-ring .status-icon { font-size: 24px; }
+
+/* Metric cards */
+.erm-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.erm-metric {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.erm-metric-icon { position: absolute; top: 12px; right: 12px; font-size: 16px; opacity: 0.35; }
+.erm-metric-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px; }
+.erm-metric-value { font-size: 20px; font-weight: 700; color: var(--text-primary); text-transform: capitalize; }
+.erm-metric.success { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.06); }
+.erm-metric.success .erm-metric-value, .erm-metric.success .erm-metric-icon { color: #10b981; }
+.erm-metric.error { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.06); }
+.erm-metric.error .erm-metric-value, .erm-metric.error .erm-metric-icon { color: #ef4444; }
+
+/* Section heads with copy */
+.erm-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.erm-section-head h3 { margin: 0; display: flex; align-items: center; gap: 8px; }
+.erm-section-head h3 svg { color: var(--primary-color, #6366f1); }
+
+.erm-copy {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border-color); border-radius: 8px;
+  background: var(--bg-primary); color: var(--text-secondary);
+  cursor: pointer; transition: all 0.15s;
+}
+.erm-copy:hover { color: var(--text-primary); border-color: var(--primary-color, #6366f1); }
+
+/* Key/value result rows */
+.erm-kv { display: flex; flex-direction: column; border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; }
+.erm-kv-row { display: flex; gap: 12px; padding: 11px 14px; background: var(--bg-primary); }
+.erm-kv-row:nth-child(even) { background: var(--bg-secondary); }
+.erm-kv-key {
+  flex: 0 0 130px; font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.erm-kv-val {
+  flex: 1; font-family: 'Courier New', monospace; font-size: 13px;
+  color: var(--text-primary); word-break: break-all;
+}
+
+/* chat-response as code */
+pre.chat-response-box {
+  margin: 0; padding: 14px 16px; border-left: 4px solid var(--primary-color, #6366f1);
+  background: var(--bg-primary); border-radius: 8px;
+  font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.55;
+  color: var(--text-primary); white-space: pre-wrap; word-break: break-word;
+  max-height: 320px; overflow: auto;
+}
+
+/* Node rows */
+.node-name { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+.node-type-chip {
+  font-family: 'Courier New', monospace; font-size: 11px;
+  padding: 2px 8px; border-radius: 6px;
+  background: var(--bg-secondary); color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+.node-state-item.open { border-color: var(--primary-color, #6366f1); }
+.output-label { display: flex; align-items: center; justify-content: space-between; }
+
 /* Dark theme adjustments */
+[data-theme="dark"] .erm-metric,
+[data-theme="dark"] .erm-status-ring { background: #242424; }
+[data-theme="dark"] .erm-kv-row { background: #1f1f1f; }
+[data-theme="dark"] .erm-kv-row:nth-child(even) { background: #262626; }
+[data-theme="dark"] pre.chat-response-box { background: #161616; }
+
 [data-theme="dark"] .execution-result-modal {
   background: #1a1a1a;
 }

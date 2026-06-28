@@ -32,7 +32,23 @@ const CHAIN_ALIASES: Record<string, Chain> = {
   bsc: chains.bsc,
   "bsc-testnet": chains.bscTestnet,
   avalanche: chains.avalanche,
+  // Local development chain (Ganache/Hardhat/Anvil) — chainId 31337 at
+  // http://127.0.0.1:8545. Lets token/transfer/write workflows run for real
+  // against funded test accounts without spending mainnet/testnet funds.
+  local: chains.hardhat,
+  localhost: chains.hardhat,
+  hardhat: chains.hardhat,
+  ganache: chains.hardhat,
+  anvil: chains.hardhat,
 };
+
+/** Default RPC for the local dev chain when a node doesn't set one. */
+export const LOCAL_RPC = "http://127.0.0.1:8545";
+const LOCAL_CHAIN_KEYS = new Set(["local", "localhost", "hardhat", "ganache", "anvil"]);
+function defaultRpcFor(chainName?: string): string | undefined {
+  const key = String(chainName || "").toLowerCase().trim();
+  return LOCAL_CHAIN_KEYS.has(key) ? LOCAL_RPC : undefined;
+}
 
 export function resolveChain(name?: string): Chain {
   if (!name) return chains.mainnet;
@@ -42,7 +58,7 @@ export function resolveChain(name?: string): Chain {
 
 export function getPublicClient(chainName?: string, rpcUrl?: string): PublicClient {
   const chain = resolveChain(chainName);
-  return createPublicClient({ chain, transport: http(rpcUrl || undefined) });
+  return createPublicClient({ chain, transport: http(rpcUrl || defaultRpcFor(chainName)) });
 }
 
 export function getAccount(privateKey: string): PrivateKeyAccount {
@@ -57,7 +73,7 @@ export function getWalletClient(
 ): { wallet: WalletClient; account: PrivateKeyAccount } {
   const chain = resolveChain(chainName);
   const account = getAccount(privateKey);
-  const wallet = createWalletClient({ account, chain, transport: http(rpcUrl || undefined) });
+  const wallet = createWalletClient({ account, chain, transport: http(rpcUrl || defaultRpcFor(chainName)) });
   return { wallet, account };
 }
 

@@ -10,6 +10,9 @@
 const PUBLICNODE = 'https://ethereum-rpc.publicnode.com';
 const ETH_USD_FEED = '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419';
 const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+// A sane default holder so a bundle's workflow runs standalone from "Start".
+// The dApp UI's typed address overrides this at run time.
+const VITALIK = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
 
 let _i = 0;
 const nid = () => `n${++_i}`;
@@ -95,8 +98,8 @@ export const dappBundles = [
     workflow: (() => {
       reset();
       const t = node('manual-trigger', 'Start', {}, 80, 200);
-      const b = node('web3-get-balance', 'Get Balance', { chain: 'ethereum', rpcUrl: PUBLICNODE }, 400, 200);
-      const o = node('respond-to-chat', 'Result', {}, 720, 200);
+      const b = node('web3-get-balance', 'Get Balance', { chain: 'ethereum', rpcUrl: PUBLICNODE, address: VITALIK }, 400, 200);
+      const o = node('readme-viewer', 'Output', { title: 'Result' }, 720, 200);
       return { name: 'Wallet Balance Checker', nodes: [t, b, o], edges: [edge(t.id, b.id), edge(b.id, o.id)] };
     })(),
   },
@@ -110,8 +113,8 @@ export const dappBundles = [
     workflow: (() => {
       reset();
       const t = node('manual-trigger', 'Start', {}, 80, 200);
-      const b = node('web3-token-balance', 'ERC-20 Balance', { chain: 'ethereum', rpcUrl: PUBLICNODE }, 400, 200);
-      const o = node('respond-to-chat', 'Result', {}, 720, 200);
+      const b = node('web3-token-balance', 'ERC-20 Balance', { chain: 'ethereum', rpcUrl: PUBLICNODE, token: USDC, address: VITALIK }, 400, 200);
+      const o = node('readme-viewer', 'Output', { title: 'Result' }, 720, 200);
       return { name: 'ERC-20 Token Balance', nodes: [t, b, o], edges: [edge(t.id, b.id), edge(b.id, o.id)] };
     })(),
   },
@@ -126,7 +129,7 @@ export const dappBundles = [
       reset();
       const t = node('manual-trigger', 'Start', {}, 80, 200);
       const p = node('web3-chainlink-price', 'ETH/USD', { chain: 'ethereum', feedAddress: ETH_USD_FEED, rpcUrl: PUBLICNODE }, 400, 200);
-      const o = node('respond-to-chat', 'Result', {}, 720, 200);
+      const o = node('readme-viewer', 'Output', { title: 'Result' }, 720, 200);
       return { name: 'ETH Price Widget', nodes: [t, p, o], edges: [edge(t.id, p.id), edge(p.id, o.id)] };
     })(),
   },
@@ -141,7 +144,7 @@ export const dappBundles = [
       reset();
       const t = node('manual-trigger', 'Start', {}, 80, 200);
       const g = node('web3-gas-price', 'Gas Price', { chain: 'ethereum', rpcUrl: PUBLICNODE }, 400, 200);
-      const o = node('respond-to-chat', 'Result', {}, 720, 200);
+      const o = node('readme-viewer', 'Output', { title: 'Result' }, 720, 200);
       return { name: 'Gas Tracker', nodes: [t, g, o], edges: [edge(t.id, g.id), edge(g.id, o.id)] };
     })(),
   },
@@ -154,10 +157,10 @@ export const dappBundles = [
       field('Your question', 'message', 'What is an ERC-20 token?') + runBtn('Ask the Assistant'))) },
     workflow: (() => {
       reset();
-      const c = node('when-chat-received', 'Chat In', { channel: 'web' }, 60, 160);
+      const c = node('manual-trigger', 'Start', {}, 60, 160);
       const m = node('groq-llama', 'Groq Llama', { model: 'llama-3.1-8b-instant', api_key: '' }, 60, 380);
       const a = node('ai-agent', 'Assistant', { prompt: 'You are a concise, helpful Web3 assistant. Answer clearly.' }, 420, 200);
-      const o = node('respond-to-chat', 'Reply', {}, 780, 200);
+      const o = node('readme-viewer', 'Output', { title: 'Answer' }, 780, 200);
       return {
         name: 'AI Web3 Assistant',
         nodes: [c, m, a, o],

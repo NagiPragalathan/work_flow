@@ -3,6 +3,13 @@ import { FiSend, FiX, FiUser, FiLoader, FiMessageCircle, FiClock, FiPlus, FiTras
 import { workflowApi } from '../../api/workflowApi';
 import MessageRenderer from './MessageRenderer';
 
+// Monotonic, collision-free message id generator. Date.now() alone collides
+// when several messages are pushed within the same millisecond (e.g. a retry
+// message immediately followed by the AI reply), which produced React's
+// "two children with the same key" warning.
+let __msgIdCounter = 0;
+const nextMessageId = () => `msg_${Date.now()}_${++__msgIdCounter}`;
+
 const AIChatbot = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState([
     {
@@ -137,7 +144,7 @@ const AIChatbot = ({ isOpen, onClose }) => {
     const settings = JSON.parse(localStorage.getItem('ai-chatbot-settings') || '{}');
     if (!settings.apiKey || !settings.apiKey.trim()) {
       const configMessage = {
-        id: Date.now(),
+        id: nextMessageId(),
         role: 'assistant',
         content: '⚠️ Please configure your AI settings first. Click the Settings button (⚙️) to set up your API key and model.',
         timestamp: new Date().toISOString()
@@ -167,7 +174,7 @@ const AIChatbot = ({ isOpen, onClose }) => {
       
       if (!settings.apiKey || !settings.apiKey.trim()) {
         const errorMessage = {
-          id: Date.now() + 1,
+          id: nextMessageId(),
           role: 'assistant',
           content: 'Please configure your AI settings first. Click the settings button to set up your API key and model.',
           timestamp: new Date().toISOString()
@@ -223,7 +230,7 @@ const AIChatbot = ({ isOpen, onClose }) => {
           if (retryCount < maxRetries) {
             // Show retry message to user
             const retryMessage = {
-              id: Date.now() + retryCount,
+              id: nextMessageId(),
               role: 'assistant',
               content: `🔄 Retrying... (attempt ${retryCount + 1}/${maxRetries + 1})`,
               timestamp: new Date().toISOString()
@@ -265,7 +272,7 @@ const AIChatbot = ({ isOpen, onClose }) => {
         }
         
         const aiMessage = {
-          id: Date.now() + 1,
+          id: nextMessageId(),
           role: 'assistant',
           content: responseContent,
           timestamp: new Date().toISOString(),
@@ -295,7 +302,7 @@ const AIChatbot = ({ isOpen, onClose }) => {
         }
         
         const errorMessage = {
-          id: Date.now() + 1,
+          id: nextMessageId(),
           role: 'assistant',
           content: errorContent,
           timestamp: new Date().toISOString(),
@@ -307,7 +314,7 @@ const AIChatbot = ({ isOpen, onClose }) => {
     } catch (error) {
       console.error('Chat error:', error);
       const errorMessage = {
-        id: Date.now() + 1,
+        id: nextMessageId(),
         role: 'assistant',
         content: 'Sorry, I\'m having trouble connecting. The AI service may not be configured yet. Please try again later or contact support.',
         timestamp: new Date().toISOString()

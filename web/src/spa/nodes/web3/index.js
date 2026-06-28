@@ -6,6 +6,7 @@ import { createNode } from '../base/nodeFactory';
 import { textProperty, selectProperty, jsonProperty, valueProperty } from '../base/commonProperties';
 
 const CHAIN_OPTIONS = [
+  { value: 'local', label: 'Local Dev Chain (127.0.0.1:8545)' },
   { value: 'ethereum', label: 'Ethereum Mainnet' },
   { value: 'sepolia', label: 'Ethereum Sepolia (testnet)' },
   { value: 'polygon', label: 'Polygon' },

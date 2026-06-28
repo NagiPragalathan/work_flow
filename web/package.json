@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "chain": "ganache --deterministic --chain.chainId 31337 --server.host 127.0.0.1 --server.port 8545 --wallet.totalAccounts 10",
+    "chain:setup": "node scripts/deploy-local-token.mjs && node scripts/setup-local-workflows.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.1",
@@ -44,7 +46,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "ganache": "^7.9.2",
     "prisma": "^6.19.3",
+    "solc": "^0.8.35",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -12,7 +12,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { 
   FiMenu, FiPlay, FiSquare, FiSave, FiFolder, FiTrash2,
-  FiSun, FiMoon, FiEdit3, FiMessageCircle, FiGrid, FiLink2, FiSettings, FiDownload, FiHome
+  FiSun, FiMoon, FiEdit3, FiMessageCircle, FiGrid, FiLink2, FiSettings, FiDownload, FiHome, FiMaximize
 } from 'react-icons/fi';
 
 import {
@@ -86,6 +86,13 @@ function WorkflowBuilder() {
   const [currentExecution, setCurrentExecution] = useState(null);
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  // Always-current instance ref so callbacks (handleImport) can fit the view
+  // without depending on the state value (which may be stale in their closure).
+  const reactFlowInstanceRef = useRef(null);
+  const fitViewSafely = useCallback((opts = {}) => {
+    const inst = reactFlowInstanceRef.current;
+    if (inst) setTimeout(() => inst.fitView({ padding: 0.25, duration: 400, ...opts }), 60);
+  }, []);
   const nodeIdCounter = useRef(0);
   const [executionResult, setExecutionResult] = useState(null);
   const [currentWorkflowId, setCurrentWorkflowId] = useState(null);
@@ -167,114 +174,40 @@ function WorkflowBuilder() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Load saved workflow from localStorage on mount (only once)
-  useEffect(() => {
-    if (hasLoadedWorkflow.current) return;
-    
-    try {
-      const savedWorkflow = localStorage.getItem('savedWorkflow');
-      const savedName = localStorage.getItem('workflowName');
-      
-      if (savedName) {
-        setWorkflowName(savedName);
-      }
-      
-      if (savedWorkflow) {
-        savedWorkflowData.current = JSON.parse(savedWorkflow);
-        hasLoadedWorkflow.current = true;
-        console.log('📂 Loaded workflow data from localStorage');
-      }
-    } catch (error) {
-      console.error('Error loading workflow:', error);
-    }
-  }, []);
-
-  // Store handlers in refs so they can be accessed before definition
-  const handlersRef = useRef({
-    handleSettingsClick: null,
-    handleExecutionClick: null,
-    deleteNode: null,
-    duplicateNode: null,
-    handleChatClick: null,
-    handleChatExecution: null
-  });
-
-  // Process saved workflow data after handlers are defined
-  useEffect(() => {
-    // Only process if we have saved data and haven't loaded yet
-    if (!hasLoadedWorkflow.current || !savedWorkflowData.current) return;
-    
-    // If nodes already exist, don't overwrite (user might have started working)
-    if (nodes.length > 0) {
-      hasLoadedWorkflow.current = false; // Mark as processed
-      return;
-    }
-    
-    // Wait for handlers to be defined
-    if (!handlersRef.current.handleSettingsClick) {
-      return; // Handlers not ready yet
-    }
-    
-    try {
-      const workflow = savedWorkflowData.current;
-      if (!workflow || !workflow.nodes || workflow.nodes.length === 0) {
-        hasLoadedWorkflow.current = false;
-        return;
-      }
-      
-      console.log('📂 Processing saved workflow:', { 
-        nodesCount: workflow.nodes.length, 
-        edgesCount: (workflow.edges || []).length 
-      });
-      
-      const loadedNodes = workflow.nodes.map(node => {
-        // Restore properties to localStorage
-        if (node.data && node.data.properties && Object.keys(node.data.properties).length > 0) {
-          try {
-            localStorage.setItem(`inputValues_${node.id}`, JSON.stringify(node.data.properties));
-            console.log(`📥 Restored properties for node ${node.id}:`, Object.keys(node.data.properties));
-          } catch (error) {
-            console.error(`Error saving to localStorage for node ${node.id}:`, error);
-          }
-        }
-        
-        return {
-          id: node.id,
-          type: node.type,
-          position: node.position || { x: 0, y: 0 },
-          data: {
-            label: node.data?.label || 'Node',
-            type: node.data?.type || node.type,
-            properties: node.data?.properties || {},
-            onSettingsClick: handlersRef.current.handleSettingsClick,
-            onExecutionClick: handlersRef.current.handleExecutionClick,
-            onDelete: handlersRef.current.deleteNode,
-            onDuplicate: handlersRef.current.duplicateNode,
-            onChatClick: handlersRef.current.handleChatClick,
-            onTrackExecution: handlersRef.current.handleChatExecution
-          }
-        };
-      });
-      
-      setNodes(loadedNodes);
-      setEdges(workflow.edges || []);
-      setIsSaved(true);
-      hasLoadedWorkflow.current = false; // Mark as processed to prevent re-loading
-      console.log('✅ Restored workflow from localStorage:', { 
-        nodes: loadedNodes.length, 
-        edges: (workflow.edges || []).length 
-      });
-    } catch (error) {
-      console.error('❌ Error processing saved workflow:', error);
-      hasLoadedWorkflow.current = false;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes.length]);
+  // While a workflow is being restored on entry (a chosen template, an opened
+  // workflow, or the last-saved canvas), skip auto-save so we don't clobber the
+  // saved copy with an empty canvas. Flipped false by the entry effect below.
+  // The actual restore lives in a single effect near the end of the component
+  // (so it can use the real node handlers); the old two-effect/handlersRef dance
+  // was dead code — handlersRef was never populated, so it never restored.
+  const isRestoring = useRef(true);
 
   // Save auto-save preference
   useEffect(() => {
     localStorage.setItem('autoSaveEnabled', autoSaveEnabled.toString());
   }, [autoSaveEnabled]);
+
+  // Persist the linked workflow id so the canvas can reconnect to the same
+  // saved workflow after switching to the Page Builder and back.
+  useEffect(() => {
+    if (currentWorkflowId) localStorage.setItem('currentWorkflowId', currentWorkflowId);
+    else localStorage.removeItem('currentWorkflowId');
+  }, [currentWorkflowId]);
+
+  // Frame every node when a workflow is (re)loaded so none stay hidden
+  // off-screen — otherwise it looks like the canvas has only one node.
+  const prevNodeCount = useRef(0);
+  useEffect(() => {
+    if (reactFlowInstance && nodes.length > 0 && prevNodeCount.current === 0) {
+      const t = setTimeout(
+        () => reactFlowInstance.fitView({ padding: 0.25, duration: 400 }),
+        250
+      );
+      prevNodeCount.current = nodes.length;
+      return () => clearTimeout(t);
+    }
+    prevNodeCount.current = nodes.length;
+  }, [nodes.length, reactFlowInstance]);
 
   // Auto-save workflow to localStorage whenever nodes or edges change (debounced)
   useEffect(() => {
@@ -283,9 +216,9 @@ function WorkflowBuilder() {
       return;
     }
     
-    // Don't auto-save if we're still in the initial loading phase
-    // (wait a bit to ensure we're not saving during initial load)
-    if (hasLoadedWorkflow.current && savedWorkflowData.current && nodes.length === 0) {
+    // Don't auto-save while restoring a workflow on entry (avoids clobbering the
+    // saved canvas with an empty one before the restore lands).
+    if (isRestoring.current) {
       return;
     }
     
@@ -883,7 +816,7 @@ function WorkflowBuilder() {
       }
 
       // Execute workflow with chat message
-      const response = await fetch(`/api/workflows/${workflowId}/execute/`, {
+      const response = await fetch(`/api/workflows/${workflowId}/execute`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1480,7 +1413,7 @@ function WorkflowBuilder() {
       const executionStartTime = Date.now();
 
       try {
-        const response = await fetch(`/api/workflows/${workflowId}/execute/`, {
+        const response = await fetch(`/api/workflows/${workflowId}/execute`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1874,10 +1807,10 @@ function WorkflowBuilder() {
           setCurrentWorkflowId(null);
 
           // Process imported nodes
-          const processedNodes = importedNodes.map((node) => {
+          const processedNodes = importedNodes.map((node, index) => {
             // Restore properties to localStorage
             if (
-              node.data.properties &&
+              node.data?.properties &&
               Object.keys(node.data.properties).length > 0
             ) {
               try {
@@ -1899,6 +1832,13 @@ function WorkflowBuilder() {
 
             return {
               ...node,
+              // ReactFlow requires every node to have a position. Default missing
+              // ones to a spread-out row (not all {0,0}) so nodes don't stack on
+              // top of each other and look like a single node.
+              position:
+                node.position && typeof node.position.x === "number"
+                  ? node.position
+                  : { x: 80 + index * 320, y: 200 },
               data: {
                 ...node.data,
                 onSettingsClick: handleSettingsClick,
@@ -1925,6 +1865,9 @@ function WorkflowBuilder() {
 
           setNodes(processedNodes);
           setEdges(processedEdges);
+          // Frame all nodes so none are hidden off-screen / behind the panel.
+          fitViewSafely({ duration: 300 });
+          setTimeout(() => fitViewSafely({ duration: 0 }), 350);
 
           showToast("✅ Workflow imported successfully!", "success");
           console.log("📂 Imported workflow:", {
@@ -2213,32 +2156,60 @@ function WorkflowBuilder() {
   ]);
 
   // On entry from the Dashboard: load a chosen template or open an existing workflow.
+  // Guard with a ref so this runs exactly once even under React StrictMode's
+  // double-invoke in dev. The previous `cancelled` flag was buggy: the first
+  // invoke consumed (removed) the localStorage key and started the fetch, then
+  // StrictMode's cleanup set cancelled=true — so the fetched workflow was
+  // discarded and the second invoke found the key already gone. Result: the
+  // canvas stayed empty for every workflow you opened.
+  const didLoadOnEntry = useRef(false);
   useEffect(() => {
-    let cancelled = false;
+    if (didLoadOnEntry.current) return;
+    didLoadOnEntry.current = true;
     (async () => {
       try {
+        const savedName = localStorage.getItem('workflowName');
+        if (savedName) setWorkflowName(savedName);
+
+        // 1) A template chosen on the Dashboard.
         const pending = localStorage.getItem('pendingWorkflowTemplate');
         if (pending) {
           localStorage.removeItem('pendingWorkflowTemplate');
           const tpl = JSON.parse(pending);
           await handleImport('local', tpl);
-          if (!cancelled && tpl.name) setWorkflowName(tpl.name);
+          if (tpl.name) setWorkflowName(tpl.name);
           return;
         }
+        // 2) An existing workflow opened from the Dashboard.
         const openId = localStorage.getItem('openWorkflowId');
         if (openId) {
           localStorage.removeItem('openWorkflowId');
           const wf = await apiService.getWorkflow(openId);
-          if (cancelled || !wf) return;
+          if (!wf) return;
           await handleImport('local', wf);
           setCurrentWorkflowId(wf.id);
           if (wf.name) setWorkflowName(wf.name);
+          return;
+        }
+        // 3) Otherwise restore the last canvas from localStorage. This is what
+        //    keeps a workflow alive when you switch to the Page Builder and back
+        //    (previously it vanished because this restore path was dead code).
+        const saved = localStorage.getItem('savedWorkflow');
+        if (saved) {
+          const data = JSON.parse(saved);
+          if (data && Array.isArray(data.nodes) && data.nodes.length > 0) {
+            await handleImport('local', data);
+            const savedId = localStorage.getItem('currentWorkflowId');
+            if (savedId) setCurrentWorkflowId(savedId);
+          }
         }
       } catch (e) {
         console.warn('Failed to load workflow on entry:', e);
+      } finally {
+        // Restore finished (or there was nothing to restore) — allow auto-save.
+        isRestoring.current = false;
       }
     })();
-    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -2294,12 +2265,21 @@ function WorkflowBuilder() {
           </div>
 
           <div className="toolbar-center">
-            {hasManualTrigger && (
+            {nodes.length > 0 && (
+              <button
+                className="toolbar-btn"
+                onClick={() => fitViewSafely({ duration: 400 })}
+                title="Fit all nodes to view"
+              >
+                <FiMaximize /> Fit
+              </button>
+            )}
+            {nodes.length > 0 && (
               <>
             <button
               className="toolbar-btn primary"
               onClick={executeWorkflow}
-              disabled={execution?.status === 'running' || nodes.length === 0}
+              disabled={execution?.status === 'running'}
             >
               <FiPlay /> Execute
             </button>
@@ -2363,7 +2343,7 @@ function WorkflowBuilder() {
             onConnect={onConnect}
             onDrop={onDrop}
             onDragOver={onDragOver}
-            onInit={setReactFlowInstance}
+            onInit={(inst) => { setReactFlowInstance(inst); reactFlowInstanceRef.current = inst; }}
             nodeTypes={nodeTypes}
             fitView
             attributionPosition="bottom-left"
@@ -2418,10 +2398,13 @@ function WorkflowBuilder() {
       {/* Render NodeSettingsModal as a popup instead of the side PropertyPanel */}
       <NodeSettingsModal
         node={selectedNodeForSettings}
+        nodes={nodes}
+        edges={edges}
         onUpdate={updateNodeData}
         onClose={() => setSelectedNodeForSettings(null)}
         isOpen={!!selectedNodeForSettings}
         onExecute={handleExecutionClick}
+        onExecuteNode={handleExecutionClick}
       />
 
       {execution && (
@@ -2463,10 +2446,11 @@ function WorkflowBuilder() {
         onToggleExpanded={setLogsExpanded}
       />
 
-            <ExecutionResultModal 
+            <ExecutionResultModal
               isOpen={!!executionResult}
               onClose={() => setExecutionResult(null)}
               result={executionResult}
+              nodes={nodes}
             />
             
             {/* Debug Panel */}

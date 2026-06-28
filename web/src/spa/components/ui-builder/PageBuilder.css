@@ -761,3 +761,194 @@
     width: 100%;
   }
 }
+
+/* ============================================================
+   Page Builder header bar (was unstyled -> fixes the broken
+   vertical / overlapping layout in the screenshot).
+   ============================================================ */
+.page-builder-studio,
+.main-content { width: 100%; }
+
+.workflow-header {
+  height: 60px;
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #e8edf3;
+  box-shadow: 0 1px 3px rgba(2, 6, 23, 0.04);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  position: relative;
+  z-index: 20;
+}
+.workflow-header .header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+.workflow-header .header-left,
+.workflow-header .header-center,
+.workflow-header .header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.workflow-header .header-left { flex: 1; min-width: 0; }
+.workflow-header .header-center { flex: 0 0 auto; }
+.workflow-header .header-right { flex: 1; justify-content: flex-end; }
+
+/* Breadcrumb */
+.workflow-breadcrumb { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.workflow-owner { color: #64748b; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.breadcrumb-separator { color: #cbd5e1; }
+.workflow-name-input {
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  padding: 6px 8px;
+  border-radius: 8px;
+  max-width: 220px;
+}
+.workflow-name-input:hover { background: #f1f5f9; }
+.workflow-name-input:focus { outline: none; background: #fff; border-color: #c7d2fe; }
+
+/* Tabs */
+.header-tabs { display: flex; align-items: center; gap: 8px; }
+.header-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s ease;
+}
+.header-tab:hover { background: #eef2ff; color: #6366f1; border-color: #c7d2fe; }
+.header-tab.active {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* Stats */
+.header-stats { display: flex; align-items: center; gap: 14px; margin-right: 6px; }
+.header-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+.header-stat .stat-label { color: #94a3b8; font-size: 11px; font-weight: 600; letter-spacing: 0.4px; }
+
+/* Header buttons */
+.header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #fff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.header-btn:hover { background: #f1f5f9; color: #0f172a; }
+.header-btn.active { border-color: #c7d2fe; }
+.header-btn.icon-only { padding: 9px; }
+.header-btn.save-btn {
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: #fff;
+  border-color: transparent;
+}
+.header-btn.save-btn:hover { color: #fff; filter: brightness(1.05); }
+
+/* More-options dropdown */
+.header-menu-container { position: relative; }
+.header-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(2, 6, 23, 0.16);
+  padding: 6px;
+  min-width: 180px;
+  z-index: 50;
+}
+.header-dropdown-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+.header-dropdown-menu .dropdown-item:hover { background: #eef2ff; color: #6366f1; }
+
+/* Dark mode header */
+.page-builder-studio.dark ~ .workflow-header,
+.app .main-content .workflow-header.dark { background: #0f172a; }
+
+/* Import modal: Web3 template grid */
+.web3-template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 10px 0;
+}
+.web3-template-grid .example-btn {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.12s ease;
+}
+.web3-template-grid .example-btn:hover {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #6366f1;
+  transform: translateY(-1px);
+}
+.import-hint {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+.import-hint code {
+  background: #eef2ff;
+  color: #6366f1;
+  padding: 1px 5px;
+  border-radius: 5px;
+  font-size: 11px;
+}

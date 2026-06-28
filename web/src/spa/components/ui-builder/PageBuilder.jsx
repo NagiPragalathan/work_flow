@@ -23,6 +23,7 @@ import {
 } from "@grapesjs/studio-sdk-plugins";
 import ProjectManager from './ProjectManager';
 import './PageBuilder.css';
+import { web3SiteTemplates } from './web3SiteTemplates';
 
 function PageBuilder() {
   const { theme } = useTheme();
@@ -295,7 +296,6 @@ function PageBuilder() {
               <div className="header-tabs">
                 <button
                   className={`header-tab ${activeTab === 'workflow' ? 'active' : ''}`}
-                  style={{ backgroundColor: activeTab === 'workflow' ? 'black' : '#2a2b2b' }}
                   onClick={() => navigateToBuilder('workflow')}
                 >
                   <FiGrid style={{ fontSize: '16px' }} />
@@ -303,7 +303,6 @@ function PageBuilder() {
                 </button>
                 <button
                   className={`header-tab ${activeTab === 'page-builder' ? 'active' : ''}`}
-                  style={{ backgroundColor: activeTab === 'page-builder' ? 'black' : '#2a2b2b' }}
                   onClick={() => navigateToBuilder('page-builder')}
                 >
                   <FiLayout style={{ fontSize: '16px' }} />
@@ -423,19 +422,24 @@ function PageBuilder() {
                 rows={15}
               />
               <div className="import-examples">
-                <p><strong>Examples:</strong></p>
-                <button 
-                  className="example-btn"
-                  onClick={() => setImportHtml('<div class="bg-blue-500 text-white p-8 rounded-lg text-center">\n  <h2 class="text-3xl font-bold mb-4">Custom Widget</h2>\n  <p class="text-lg">This is a custom imported widget</p>\n</div>')}
-                >
-                  Load Example 1
-                </button>
-                <button 
-                  className="example-btn"
-                  onClick={() => setImportHtml('<section class="py-16 px-4 bg-gradient-to-r from-purple-500 to-pink-500">\n  <div class="container mx-auto text-center text-white">\n    <h1 class="text-5xl font-bold mb-4">Gradient Section</h1>\n    <p class="text-xl">Beautiful gradient background</p>\n  </div>\n</section>')}
-                >
-                  Load Example 2
-                </button>
+                <p><strong>Web3 templates</strong> — click to load, then Import:</p>
+                <div className="web3-template-grid">
+                  {web3SiteTemplates.map((tpl) => (
+                    <button
+                      key={tpl.name}
+                      className="example-btn"
+                      title={tpl.description}
+                      onClick={() => setImportHtml(tpl.html)}
+                    >
+                      {tpl.name}
+                    </button>
+                  ))}
+                </div>
+                <p className="import-hint">
+                  Tip: buttons with a <code>data-workflow</code> attribute trigger that saved
+                  workflow when the page is previewed or published — your site element becomes a
+                  Web3 action.
+                </p>
               </div>
             </div>
             <div className="modal-footer">

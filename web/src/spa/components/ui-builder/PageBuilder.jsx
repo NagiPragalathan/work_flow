@@ -13,9 +13,11 @@ import {
   FiFile,
   FiImage,
   FiHome,
-  FiMessageSquare
+  FiMessageSquare,
+  FiGlobe
 } from 'react-icons/fi';
 import AIChatbot from '../ui/AIChatbot';
+import apiService from '../../services/api';
 import StudioEditor from '@grapesjs/studio-sdk/react';
 import '@grapesjs/studio-sdk/style';
 import { 
@@ -36,7 +38,13 @@ function PageBuilder() {
   const [pendingSite] = useState(() => {
     try {
       const p = localStorage.getItem('pendingSiteTemplate');
-      if (p) { localStorage.removeItem('pendingSiteTemplate'); return JSON.parse(p); }
+      if (p) {
+        localStorage.removeItem('pendingSiteTemplate');
+        // Drop the previous autosaved project so the chosen template loads fresh
+        // instead of the editor restoring the last-saved page.
+        localStorage.removeItem('gjsProject');
+        return JSON.parse(p);
+      }
     } catch { /* ignore */ }
     return null;
   });
@@ -55,6 +63,7 @@ function PageBuilder() {
 
   // Load project data from localStorage on mount
   useEffect(() => {
+    if (pendingSite) return; // a template was chosen — don't restore the old project
     const savedProject = localStorage.getItem('gjsProject');
     if (savedProject) {
       try {
@@ -230,6 +239,42 @@ function PageBuilder() {
     }
   }, [editor]);
 
+  // Publish: export the current page's HTML+CSS and serve it at a live URL.
+  const [publishing, setPublishing] = useState(false);
+  const handlePublish = useCallback(async () => {
+    if (!editor) return;
+    setPublishing(true);
+    try {
+      const html = editor.getHtml();
+      const css = editor.getCss();
+      const fullHtml =
+        '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">' +
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+        `<title>${projectName || 'Published Page'}</title>` +
+        '<script src="https://cdn.tailwindcss.com"></scr' + 'ipt>' +
+        `<style>${css}</style></head><body>${html}</body></html>`;
+
+      const page = await apiService.createUIProject({
+        project_name: `${projectName || 'Page'} (published)`,
+        components: { html: fullHtml },
+      });
+      const url = `${window.location.origin}/p/${page.id}`;
+      try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
+      window.open(url, '_blank');
+
+      const n = document.createElement('div');
+      n.style.cssText =
+        'position:fixed;top:20px;right:20px;background:#6366f1;color:#fff;padding:14px 18px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:99999;font-weight:600;max-width:380px;font-family:Inter,sans-serif';
+      n.innerHTML = `✓ Published! Link copied:<br/><a href="${url}" target="_blank" style="color:#e0e7ff;font-weight:500;font-size:13px;word-break:break-all">${url}</a>`;
+      document.body.appendChild(n);
+      setTimeout(() => n.remove(), 6000);
+    } catch (e) {
+      alert('Publish failed: ' + (e?.message || e));
+    } finally {
+      setPublishing(false);
+    }
+  }, [editor, projectName]);
+
   // Get page and component stats
   const [stats, setStats] = useState({ pages: 0, components: 0 });
   
@@ -366,7 +411,17 @@ function PageBuilder() {
                 <FiSave />
                 {isSaved ? 'Saved' : 'Save'}
               </button>
-              
+
+              <button
+                className="header-btn publish-btn"
+                onClick={handlePublish}
+                disabled={publishing}
+                title="Publish to a live, shareable URL"
+              >
+                <FiGlobe />
+                {publishing ? 'Publishing…' : 'Publish'}
+              </button>
+
               <div className="header-menu-container" ref={menuRef}>
                 <button
                   className="header-btn icon-only"

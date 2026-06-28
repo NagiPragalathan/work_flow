@@ -5,6 +5,7 @@ import { ThemeProvider } from './theme.jsx';
 import { AuthProvider } from './contexts/AuthContext.jsx';
 import './index.css';
 import './App.css';
+import './theme-enhance.css';
 
 /**
  * Entry point for the legacy React SPA, mounted inside Next.js as a

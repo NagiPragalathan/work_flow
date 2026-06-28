@@ -50,6 +50,12 @@ const WEB3 = [
   "web3-ens",
   "web3-sign-message",
   "web3-event-trigger",
+  "web3-token-balance",
+  "web3-gas-price",
+  "web3-get-block",
+  "web3-tx-status",
+  "web3-nft-transfer",
+  "web3-chainlink-price",
 ];
 
 /** Get the appropriate executor instance for a node (ported from _get_node_executor). */

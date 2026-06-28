@@ -22,6 +22,8 @@ import {
   parseAbi,
   jsonSafe,
   ERC20_ABI,
+  ERC721_ABI,
+  CHAINLINK_ABI,
 } from "../web3";
 
 function asObject(v: unknown): Record<string, unknown> {
@@ -49,6 +51,18 @@ export class Web3NodeExecutor extends BaseNodeExecutor {
         return this.signMessage(inputs, context);
       case "web3-event-trigger":
         return this.eventTrigger(context);
+      case "web3-token-balance":
+        return this.tokenBalance(inputs);
+      case "web3-gas-price":
+        return this.gasPrice(inputs);
+      case "web3-get-block":
+        return this.getBlock(inputs);
+      case "web3-tx-status":
+        return this.txStatus(inputs);
+      case "web3-nft-transfer":
+        return this.nftTransfer(inputs, context);
+      case "web3-chainlink-price":
+        return this.chainlinkPrice(inputs);
       default:
         throw new NodeExecutionError(`Unknown web3 node type: ${this.nodeType}`);
     }
@@ -292,6 +306,120 @@ export class Web3NodeExecutor extends BaseNodeExecutor {
         from_block: fromBlock.toString(),
         to_block: latest.toString(),
       },
+    };
+  }
+
+  private async tokenBalance(inputs: NodeInputs): Promise<NodeResult> {
+    const { chain, rpc } = this.chainAndRpc(inputs);
+    const token = this.getProperty<string>("token", "");
+    const address =
+      this.getProperty<string>("address", "") ||
+      (asObject(inputs.main).address as string) ||
+      (asObject(inputs.wallet).address as string);
+    if (!token || !isAddress(token)) throw new NodeExecutionError("A valid token address is required");
+    if (!address || !isAddress(address)) throw new NodeExecutionError("A valid holder address is required");
+
+    const client = getPublicClient(chain, rpc);
+    const [raw, decimals, symbol] = await Promise.all([
+      client.readContract({ address: token as `0x${string}`, abi: ERC20_ABI, functionName: "balanceOf", args: [address as `0x${string}`] }) as Promise<bigint>,
+      client.readContract({ address: token as `0x${string}`, abi: ERC20_ABI, functionName: "decimals" }) as Promise<number>,
+      client
+        .readContract({ address: token as `0x${string}`, abi: ERC20_ABI, functionName: "symbol" })
+        .catch(() => "") as Promise<string>,
+    ]);
+    const balance = formatUnits(raw, decimals);
+    this.logExecution(`Token balance ${balance} ${symbol} for ${address}`);
+    return { main: { token, address, chain, symbol, decimals, balance, balance_raw: raw.toString() } };
+  }
+
+  private async gasPrice(inputs: NodeInputs): Promise<NodeResult> {
+    const { chain, rpc } = this.chainAndRpc(inputs);
+    const client = getPublicClient(chain, rpc);
+    const wei = await client.getGasPrice();
+    const gwei = formatUnits(wei, 9);
+    this.logExecution(`Gas price ${gwei} gwei (${chain})`);
+    return { main: { chain, gas_price_wei: wei.toString(), gas_price_gwei: gwei } };
+  }
+
+  private async getBlock(inputs: NodeInputs): Promise<NodeResult> {
+    const { chain, rpc } = this.chainAndRpc(inputs);
+    const client = getPublicClient(chain, rpc);
+    const block = await client.getBlock();
+    this.logExecution(`Latest block #${block.number} (${chain})`);
+    return {
+      main: {
+        chain,
+        number: block.number?.toString(),
+        hash: block.hash,
+        timestamp: block.timestamp?.toString(),
+        gas_used: block.gasUsed?.toString(),
+        tx_count: block.transactions.length,
+      },
+    };
+  }
+
+  private async txStatus(inputs: NodeInputs): Promise<NodeResult> {
+    const { chain, rpc } = this.chainAndRpc(inputs);
+    const hash =
+      this.getProperty<string>("txHash", "") ||
+      (asObject(inputs.main).tx_hash as string);
+    if (!hash) throw new NodeExecutionError("A transaction hash is required");
+    const client = getPublicClient(chain, rpc);
+    const wait = this.getProperty<boolean>("waitForReceipt", true);
+    const receipt = wait
+      ? await client.waitForTransactionReceipt({ hash: hash as `0x${string}` })
+      : await client.getTransactionReceipt({ hash: hash as `0x${string}` });
+    this.logExecution(`Tx ${hash} status: ${receipt.status}`);
+    return {
+      main: {
+        tx_hash: hash,
+        chain,
+        status: receipt.status,
+        block_number: receipt.blockNumber?.toString(),
+        gas_used: receipt.gasUsed?.toString(),
+        from: receipt.from,
+        to: receipt.to,
+      },
+    };
+  }
+
+  private async nftTransfer(inputs: NodeInputs, context: ExecContext): Promise<NodeResult> {
+    const { chain, rpc } = this.chainAndRpc(inputs);
+    const contract = this.getProperty<string>("contractAddress", "");
+    const to = this.getProperty<string>("to", "") || (asObject(inputs.main).to as string);
+    const tokenId = this.getProperty<string>("tokenId", "");
+    if (!contract || !isAddress(contract)) throw new NodeExecutionError("A valid NFT contract address is required");
+    if (!to || !isAddress(to)) throw new NodeExecutionError("A valid recipient 'to' address is required");
+    if (tokenId === "") throw new NodeExecutionError("A tokenId is required");
+
+    const pk = this.resolvePrivateKey(inputs, context);
+    const { wallet, account } = getWalletClient(pk, chain, rpc);
+    const hash = await wallet.writeContract({
+      address: contract as `0x${string}`,
+      abi: ERC721_ABI,
+      functionName: "safeTransferFrom",
+      args: [account.address, to as `0x${string}`, BigInt(tokenId)],
+      account,
+      chain: wallet.chain,
+    });
+    this.logExecution(`NFT #${tokenId} transfer to ${to}: ${hash}`);
+    return { main: { tx_hash: hash, contract, to, tokenId, chain, from: account.address } };
+  }
+
+  private async chainlinkPrice(inputs: NodeInputs): Promise<NodeResult> {
+    const { chain, rpc } = this.chainAndRpc(inputs);
+    const feed = this.getProperty<string>("feedAddress", "");
+    if (!feed || !isAddress(feed)) throw new NodeExecutionError("A valid Chainlink feed address is required");
+    const client = getPublicClient(chain, rpc);
+    const [round, decimals] = await Promise.all([
+      client.readContract({ address: feed as `0x${string}`, abi: CHAINLINK_ABI, functionName: "latestRoundData" }) as Promise<readonly [bigint, bigint, bigint, bigint, bigint]>,
+      client.readContract({ address: feed as `0x${string}`, abi: CHAINLINK_ABI, functionName: "decimals" }) as Promise<number>,
+    ]);
+    const answer = round[1];
+    const price = formatUnits(answer, decimals);
+    this.logExecution(`Chainlink price ${price} (feed ${feed})`);
+    return {
+      main: { feed, chain, price, answer_raw: answer.toString(), decimals, updated_at: round[3].toString() },
     };
   }
 }

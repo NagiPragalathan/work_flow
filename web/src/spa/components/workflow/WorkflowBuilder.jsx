@@ -30,6 +30,7 @@ import AIChatbot from '../ui/AIChatbot';
 import SettingsModal from '../ui/SettingsModal';
 import ExportModal from '../ui/ExportModal';
 import ImportModal from '../ui/ImportModal';
+import TemplatesModal from '../ui/TemplatesModal';
 import ClearWorkspaceModal from '../ui/ClearWorkspaceModal';
 import { nodeTypeDefinitions } from '../../nodeTypes.jsx';
 import { executionEngine } from '../../executionEngine';
@@ -97,6 +98,7 @@ function WorkflowBuilder() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
   const [clearWorkspaceModalOpen, setClearWorkspaceModalOpen] = useState(false);
   const [flowKey, setFlowKey] = useState(0);
   const [activeTab, setActiveTab] = useState('workflow'); // 'workflow' or 'page-builder'
@@ -2462,9 +2464,10 @@ function WorkflowBuilder() {
             )}
       
       {/* Vertical Toolbar */}
-      <VerticalToolbar 
+      <VerticalToolbar
         onExport={saveWorkflow}
         onImport={openImportModal}
+        onTemplates={() => setTemplatesModalOpen(true)}
         onAddNotes={addNotesNode}
         onOpenAI={() => setChatOpen(true)}
         onClearWorkspace={handleClearWorkspace}
@@ -2498,10 +2501,20 @@ function WorkflowBuilder() {
       />
       
           {/* Import Modal */}
-          <ImportModal 
-            isOpen={importModalOpen} 
+          <ImportModal
+            isOpen={importModalOpen}
             onClose={() => setImportModalOpen(false)}
             onImport={handleImport}
+          />
+
+          {/* Templates Gallery */}
+          <TemplatesModal
+            isOpen={templatesModalOpen}
+            onClose={() => setTemplatesModalOpen(false)}
+            onUse={(template) => {
+              handleImport('local', template);
+              showToast(`✨ Loaded template: ${template.name}`, 'success', 2500);
+            }}
           />
           
           {/* Clear Workspace Modal */}

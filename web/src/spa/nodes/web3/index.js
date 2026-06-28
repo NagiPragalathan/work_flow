@@ -187,4 +187,97 @@ export const web3Nodes = {
       rpcUrl: rpcProperty(),
     },
   }),
+
+  'web3-token-balance': createNode({
+    name: 'ERC-20 Balance',
+    category: 'Web3',
+    color: COLOR,
+    icon: 'FiDollarSign',
+    description: 'Read an ERC-20 token balance (with symbol & decimals)',
+    inputs: [{ name: 'main', type: 'main', required: false, displayName: 'Input' }],
+    outputs: mainOut,
+    properties: {
+      chain: chainProperty(),
+      token: textProperty('Token Contract Address', true, '0x...'),
+      address: textProperty('Holder Address', true, '0x...'),
+      rpcUrl: rpcProperty(),
+    },
+  }),
+
+  'web3-gas-price': createNode({
+    name: 'Gas Price',
+    category: 'Web3',
+    color: COLOR,
+    icon: 'FiActivity',
+    description: 'Get the current network gas price (gwei)',
+    inputs: [{ name: 'main', type: 'main', required: false, displayName: 'Input' }],
+    outputs: mainOut,
+    properties: {
+      chain: chainProperty(),
+      rpcUrl: rpcProperty(),
+    },
+  }),
+
+  'web3-get-block': createNode({
+    name: 'Get Block',
+    category: 'Web3',
+    color: COLOR,
+    icon: 'FiBox',
+    description: 'Fetch the latest block (number, hash, timestamp, gas used)',
+    inputs: [{ name: 'main', type: 'main', required: false, displayName: 'Input' }],
+    outputs: mainOut,
+    properties: {
+      chain: chainProperty(),
+      rpcUrl: rpcProperty(),
+    },
+  }),
+
+  'web3-tx-status': createNode({
+    name: 'Transaction Status',
+    category: 'Web3',
+    color: COLOR,
+    icon: 'FiActivity',
+    description: 'Get a transaction receipt / wait for confirmation',
+    inputs: [{ name: 'main', type: 'main', required: false, displayName: 'Input' }],
+    outputs: mainOut,
+    properties: {
+      chain: chainProperty(),
+      txHash: textProperty('Transaction Hash', false, '0x...'),
+      waitForReceipt: { type: 'boolean', label: 'Wait for confirmation', default: true },
+      rpcUrl: rpcProperty(),
+    },
+  }),
+
+  'web3-nft-transfer': createNode({
+    name: 'NFT Transfer (ERC-721)',
+    category: 'Web3',
+    color: COLOR,
+    icon: 'FiSend',
+    description: 'Transfer an ERC-721 NFT to another address',
+    inputs: signerInputs,
+    outputs: mainOut,
+    properties: {
+      chain: chainProperty(),
+      contractAddress: textProperty('NFT Contract Address', true, '0x...'),
+      to: textProperty('To Address', true, '0x...'),
+      tokenId: textProperty('Token ID', true, '1'),
+      privateKey: privateKeyProperty(),
+      rpcUrl: rpcProperty(),
+    },
+  }),
+
+  'web3-chainlink-price': createNode({
+    name: 'Chainlink Price Feed',
+    category: 'Web3',
+    color: COLOR,
+    icon: 'FiTrendingUp',
+    description: 'Read an asset price from a Chainlink price feed',
+    inputs: [{ name: 'main', type: 'main', required: false, displayName: 'Input' }],
+    outputs: mainOut,
+    properties: {
+      chain: chainProperty(),
+      feedAddress: textProperty('Feed Address', true, '0x... (e.g. ETH/USD)'),
+      rpcUrl: rpcProperty(),
+    },
+  }),
 };

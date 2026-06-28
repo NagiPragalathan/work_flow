@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import { FiX, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { nodeTypeDefinitions } from '../../nodeTypes.jsx';
 import { credentialsManager, credentialTypes } from '../../credentialsManager';
+import Editor from 'react-simple-code-editor';
+import { highlight, languages } from 'prismjs/components/prism-core';
+import 'prismjs/components/prism-clike';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-python';
+import 'prismjs/themes/prism-tomorrow.css';
 
 const PropertyPanel = ({ node, onUpdate, onClose }) => {
   const [properties, setProperties] = useState(node?.data?.properties || {});
@@ -648,16 +655,52 @@ const PropertyPanel = ({ node, onUpdate, onClose }) => {
         );
 
       case 'json':
-      case 'code':
+      case 'code': {
+        const langKey =
+          propDef.type === 'json'
+            ? 'json'
+            : propDef.language === 'python'
+            ? 'python'
+            : 'javascript';
+        const grammar = languages[langKey] || languages.javascript;
         return (
-          <textarea
-            value={value}
-            onChange={(e) => handlePropertyChange(propKey, e.target.value)}
-            className="code-editor"
-            rows={8}
-            spellCheck={false}
-          />
+          <div className="code-editor-wrap">
+            <div className="code-editor-bar">
+              <span className="code-dot" /><span className="code-dot" /><span className="code-dot" />
+              <span className="code-lang">{langKey}</span>
+            </div>
+            <Editor
+              value={value || ''}
+              onValueChange={(code) => handlePropertyChange(propKey, code)}
+              highlight={(code) => highlight(code, grammar, langKey)}
+              padding={14}
+              spellCheck={false}
+              textareaClassName="code-editor-textarea"
+              style={{
+                fontFamily:
+                  'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace',
+                fontSize: 13,
+                lineHeight: 1.6,
+                minHeight: 180,
+                background: '#1e1e2e',
+                color: '#e5e7eb',
+                borderRadius: '0 0 10px 10px',
+                outline: 'none',
+              }}
+            />
+            <style>{`
+              .code-editor-wrap { border-radius: 10px; overflow: hidden; box-shadow: 0 6px 18px rgba(2,6,23,0.18); border: 1px solid #2a2a3c; }
+              .code-editor-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #161623; }
+              .code-editor-bar .code-dot { width: 10px; height: 10px; border-radius: 50%; background: #3b3b52; }
+              .code-editor-bar .code-dot:nth-child(1) { background: #ff5f56; }
+              .code-editor-bar .code-dot:nth-child(2) { background: #ffbd2e; }
+              .code-editor-bar .code-dot:nth-child(3) { background: #27c93f; }
+              .code-editor-bar .code-lang { margin-left: auto; font-size: 11px; color: #8b8ba7; text-transform: uppercase; letter-spacing: 0.5px; }
+              .code-editor-textarea:focus { outline: none; }
+            `}</style>
+          </div>
         );
+      }
 
       default:
         return (

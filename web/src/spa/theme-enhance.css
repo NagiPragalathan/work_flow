@@ -1,0 +1,171 @@
+/* ============================================================
+   Theme enhancement layer — additive polish on top of the app's
+   existing styles. Targets stable ReactFlow + toolbar classes.
+   ============================================================ */
+
+:root {
+  --wf-accent: #6366f1;
+  --wf-accent-2: #8b5cf6;
+  --wf-accent-3: #0ea5e9;
+  --wf-surface: #ffffff;
+  --wf-ring: rgba(99, 102, 241, 0.35);
+}
+
+/* Canvas: soft gradient wash behind the dotted background */
+.react-flow,
+.react-flow__renderer {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(139, 92, 246, 0.08), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(14, 165, 233, 0.08), transparent 60%),
+    #f7f8fc;
+}
+
+/* Nodes: lift + smooth hover, without overriding the node's own card chrome */
+.react-flow__node {
+  transition: transform 0.12s ease, filter 0.12s ease;
+  filter: drop-shadow(0 6px 14px rgba(15, 23, 42, 0.08));
+}
+.react-flow__node:hover {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 12px 24px rgba(99, 102, 241, 0.16));
+}
+.react-flow__node.selected {
+  filter: drop-shadow(0 0 0 2px var(--wf-ring)) drop-shadow(0 10px 22px rgba(99, 102, 241, 0.22));
+}
+
+/* Connection handles: clearer, branded */
+.react-flow__handle {
+  width: 11px;
+  height: 11px;
+  border: 2px solid #fff;
+  background: var(--wf-accent);
+  box-shadow: 0 1px 3px rgba(2, 6, 23, 0.25);
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+.react-flow__handle:hover {
+  transform: scale(1.25);
+  background: var(--wf-accent-2);
+}
+
+/* Edges: thicker, branded, animated when selected */
+.react-flow__edge-path {
+  stroke: #b4bcc8;
+  stroke-width: 2.5;
+}
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: var(--wf-accent);
+  stroke-width: 3;
+}
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 6;
+  animation: wf-dash 0.6s linear infinite;
+}
+@keyframes wf-dash {
+  to { stroke-dashoffset: -12; }
+}
+
+/* Controls: card style */
+.react-flow__controls {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+.react-flow__controls-button {
+  background: #fff;
+  border-bottom: 1px solid #eef1f6;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+.react-flow__controls-button:hover {
+  background: #eef2ff;
+  color: var(--wf-accent);
+}
+
+/* Mini-map: rounded, elevated */
+.react-flow__minimap {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.react-flow__attribution {
+  background: transparent;
+  opacity: 0.45;
+}
+
+/* Vertical toolbar: glass card + hover lift */
+.vertical-toolbar .toolbar-button {
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.vertical-toolbar .toolbar-button:hover {
+  transform: translateY(-2px);
+  color: var(--wf-accent);
+  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.22);
+}
+.vertical-toolbar .toolbar-button-primary {
+  background: linear-gradient(135deg, var(--wf-accent-2), var(--wf-accent)) !important;
+  color: #fff !important;
+}
+.vertical-toolbar .toolbar-button-primary:hover {
+  color: #fff !important;
+  filter: brightness(1.05);
+}
+
+/* Nicer scrollbars across the app */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c7cdd9 transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: #c7cdd9;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: #aab2c2; background-clip: content-box; }
+
+/* Node library category rows: subtle hover affordance */
+.library-categories > * {
+  border-radius: 10px;
+  transition: background 0.1s ease;
+}
+
+/* Buttons everywhere get a gentle press feedback */
+button { transition: transform 0.08s ease; }
+button:active { transform: translateY(1px); }
+
+/* Header builder tabs: fix cramped/overlapping layout */
+.builder-nav-tabs {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+.builder-nav-tab {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #475569;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.builder-nav-tab:hover:not(.active) {
+  background: #eef2ff;
+  color: var(--wf-accent);
+}
+.builder-nav-tab.active {
+  background: linear-gradient(135deg, var(--wf-accent-2), var(--wf-accent));
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}

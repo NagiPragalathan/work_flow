@@ -249,7 +249,11 @@ export class Web3NodeExecutor extends BaseNodeExecutor {
   }
 
   private async ens(inputs: NodeInputs): Promise<NodeResult> {
-    const client = getPublicClient("ethereum");
+    // ENS lives on mainnet. viem's built-in default RPC is unreliable (it can
+    // hang), so use a known-good public endpoint unless one is provided.
+    const rpc =
+      this.getProperty<string>("rpcUrl", "") || "https://ethereum-rpc.publicnode.com";
+    const client = getPublicClient("ethereum", rpc);
     const name = this.getProperty<string>("name", "") || (asObject(inputs.main).name as string);
     const address =
       this.getProperty<string>("address", "") || (asObject(inputs.main).address as string);

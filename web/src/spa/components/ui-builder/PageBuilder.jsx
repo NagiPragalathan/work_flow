@@ -8,11 +8,14 @@ import {
   FiSave, 
   FiPower, 
   FiMoreVertical, 
-  FiSun, 
+  FiSun,
   FiMoon,
   FiFile,
-  FiImage
+  FiImage,
+  FiHome,
+  FiMessageSquare
 } from 'react-icons/fi';
+import AIChatbot from '../ui/AIChatbot';
 import StudioEditor from '@grapesjs/studio-sdk/react';
 import '@grapesjs/studio-sdk/style';
 import { 
@@ -27,7 +30,16 @@ import { web3SiteTemplates } from './web3SiteTemplates';
 
 function PageBuilder() {
   const { theme } = useTheme();
-  const { navigateToBuilder, activeTab } = useNavigation();
+  const { navigateToBuilder, activeTab, goHome } = useNavigation();
+  const [aiOpen, setAiOpen] = useState(false);
+  // Template chosen on the Dashboard (loaded as the initial page).
+  const [pendingSite] = useState(() => {
+    try {
+      const p = localStorage.getItem('pendingSiteTemplate');
+      if (p) { localStorage.removeItem('pendingSiteTemplate'); return JSON.parse(p); }
+    } catch { /* ignore */ }
+    return null;
+  });
   const [editor, setEditor] = useState(null);
   const [projectData, setProjectData] = useState(null);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -279,6 +291,9 @@ function PageBuilder() {
         <div className="workflow-header">
           <div className="header-top">
             <div className="header-left">
+              <button className="header-btn icon-only" onClick={goHome} title="Back to Dashboard">
+                <FiHome />
+              </button>
               <div className="workflow-breadcrumb">
                 <span className="workflow-owner">Personal</span>
                 <span className="breadcrumb-separator">/</span>
@@ -385,6 +400,14 @@ function PageBuilder() {
               </div>
               
               <button
+                className="header-btn save-btn"
+                onClick={() => setAiOpen(true)}
+                title="AI Assistant"
+              >
+                <FiMessageSquare /> AI
+              </button>
+
+              <button
                 className="header-btn icon-only"
                 onClick={toggleTheme}
                 title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
@@ -469,7 +492,16 @@ function PageBuilder() {
           },
 
           // Project configuration
-          project: projectData || {
+          project: pendingSite
+            ? {
+                type: 'web',
+                default: {
+                  pages: [
+                    { id: 'home-page', name: pendingSite.name || 'Home', component: pendingSite.html },
+                  ],
+                },
+              }
+            : projectData || {
             type: 'web',
             default: {
               pages: [
@@ -1090,6 +1122,9 @@ function PageBuilder() {
           />
         </div>
       </div>
+
+      {/* AI Assistant */}
+      <AIChatbot isOpen={aiOpen} onClose={() => setAiOpen(false)} />
     </div>
   );
 }

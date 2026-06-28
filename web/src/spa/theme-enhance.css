@@ -169,3 +169,50 @@ button:active { transform: translateY(1px); }
   border-color: transparent;
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
+
+/* ============================================================
+   Dark mode overrides (the rules above default to light).
+   ============================================================ */
+[data-theme="dark"] .react-flow,
+[data-theme="dark"] .react-flow__renderer {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(14, 165, 233, 0.10), transparent 60%),
+    #0a0a12;
+}
+[data-theme="dark"] .react-flow__node {
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
+}
+[data-theme="dark"] .react-flow__node:hover {
+  filter: drop-shadow(0 12px 26px rgba(99, 102, 241, 0.3));
+}
+[data-theme="dark"] .react-flow__handle { border-color: #14141f; }
+[data-theme="dark"] .react-flow__edge-path { stroke: #3b3b52; }
+[data-theme="dark"] .react-flow__controls {
+  border-color: #26263a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+[data-theme="dark"] .react-flow__controls-button {
+  background: #14141f;
+  color: #cbd5e1;
+  border-bottom-color: #26263a;
+  fill: currentColor;
+}
+[data-theme="dark"] .react-flow__controls-button:hover { background: #26263a; color: #a5b4fc; }
+[data-theme="dark"] .react-flow__minimap {
+  background: #12121a;
+  border-color: #26263a;
+}
+[data-theme="dark"] .react-flow__background { opacity: 0.4; }
+
+/* Builder header tabs in dark */
+[data-theme="dark"] .builder-nav-tab {
+  background: #14141f;
+  color: #cbd5e1;
+  border-color: #26263a;
+}
+[data-theme="dark"] .builder-nav-tab:hover:not(.active) { background: #1e1e2e; color: #a5b4fc; }
+
+/* Scrollbars dark */
+[data-theme="dark"] * { scrollbar-color: #3b3b52 transparent; }
+[data-theme="dark"] *::-webkit-scrollbar-thumb { background: #3b3b52; background-clip: content-box; }

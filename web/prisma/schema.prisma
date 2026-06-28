@@ -38,6 +38,11 @@ model Workflow {
   updatedAt   DateTime @updatedAt @map("updated_at")
   isActive    Boolean  @default(true) @map("is_active")
 
+  // Scheduling (cron) — drives the in-process scheduler
+  schedule        String?  // cron expression, e.g. "0 * * * *"
+  scheduleEnabled Boolean  @default(false) @map("schedule_enabled")
+  lastRunAt       DateTime? @map("last_run_at")
+
   executions WorkflowExecution[]
 
   @@index([userId, createdAt])

@@ -11,8 +11,8 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { 
-  FiMenu, FiPlay, FiSquare, FiSave, FiFolder, FiTrash2, 
-  FiSun, FiMoon, FiEdit3, FiMessageCircle, FiGrid, FiLink2, FiSettings, FiDownload 
+  FiMenu, FiPlay, FiSquare, FiSave, FiFolder, FiTrash2,
+  FiSun, FiMoon, FiEdit3, FiMessageCircle, FiGrid, FiLink2, FiSettings, FiDownload, FiHome
 } from 'react-icons/fi';
 
 import {
@@ -50,7 +50,7 @@ const initialEdges = [];
 
 function WorkflowBuilder() {
   const { theme, toggleTheme } = useTheme();
-  const { navigateToBuilder } = useNavigation();
+  const { navigateToBuilder, goHome } = useNavigation();
   const [nodes, setNodes] = useState(initialNodes);
   const [edges, setEdges] = useState(initialEdges);
 
@@ -2212,6 +2212,36 @@ function WorkflowBuilder() {
     handleChatExecution,
   ]);
 
+  // On entry from the Dashboard: load a chosen template or open an existing workflow.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const pending = localStorage.getItem('pendingWorkflowTemplate');
+        if (pending) {
+          localStorage.removeItem('pendingWorkflowTemplate');
+          const tpl = JSON.parse(pending);
+          await handleImport('local', tpl);
+          if (!cancelled && tpl.name) setWorkflowName(tpl.name);
+          return;
+        }
+        const openId = localStorage.getItem('openWorkflowId');
+        if (openId) {
+          localStorage.removeItem('openWorkflowId');
+          const wf = await apiService.getWorkflow(openId);
+          if (cancelled || !wf) return;
+          await handleImport('local', wf);
+          setCurrentWorkflowId(wf.id);
+          if (wf.name) setWorkflowName(wf.name);
+        }
+      } catch (e) {
+        console.warn('Failed to load workflow on entry:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div
       className={`app ${logsExpanded ? "logs-expanded" : ""} ${
@@ -2235,6 +2265,13 @@ function WorkflowBuilder() {
               title="Toggle Node Library"
             >
               <FiMenu />
+            </button>
+            <button
+              className="toolbar-btn"
+              onClick={goHome}
+              title="Back to Dashboard"
+            >
+              <FiHome />
             </button>
             {/* Navigation Tabs */}
             <div className="builder-nav-tabs">

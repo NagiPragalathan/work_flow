@@ -1,8 +1,9 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import WorkflowBuilder from '../components/workflow/WorkflowBuilder';
 import PageBuilder from '../components/ui-builder/PageBuilder';
+import Dashboard from '../dashboard/Dashboard';
 import Login from '../components/auth/Login';
 import Signup from '../components/auth/Signup';
 
@@ -75,44 +76,44 @@ const PublicRoute = ({ children }) => {
 };
 
 function AppRouter() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(() => {
-    // Load active tab from localStorage
     return localStorage.getItem('activeBuilderTab') || 'workflow';
   });
 
-  // Save active tab to localStorage
   useEffect(() => {
     localStorage.setItem('activeBuilderTab', activeTab);
   }, [activeTab]);
 
+  // Enter a builder (used from the Dashboard and from the in-builder tabs).
   const navigateToBuilder = (builder) => {
     setActiveTab(builder);
+    navigate('/builder');
   };
 
+  // Return to the dashboard.
+  const goHome = () => navigate('/');
+
   return (
-    <NavigationContext.Provider value={{ activeTab, navigateToBuilder }}>
+    <NavigationContext.Provider value={{ activeTab, navigateToBuilder, goHome }}>
       <Routes>
-        {/* Public routes - redirect to home if already logged in */}
-        <Route 
-          path="/login" 
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          } 
-        />
-        <Route 
-          path="/signup" 
-          element={
-            <PublicRoute>
-              <Signup />
-            </PublicRoute>
-          } 
-        />
-        
-        {/* Protected routes - redirect to login if not authenticated */}
+        {/* Public routes */}
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+
+        {/* Dashboard (landing) */}
         <Route
           path="/"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Builders */}
+        <Route
+          path="/builder"
           element={
             <ProtectedRoute>
               <div className="app-router" style={{ width: '100%', height: '100vh', overflow: 'hidden' }}>
@@ -122,8 +123,7 @@ function AppRouter() {
             </ProtectedRoute>
           }
         />
-        
-        {/* Redirect unknown routes to home */}
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </NavigationContext.Provider>

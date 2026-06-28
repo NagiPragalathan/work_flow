@@ -32,6 +32,9 @@ export function serializeWorkflow(w: Workflow) {
     created_at: w.createdAt,
     updated_at: w.updatedAt,
     is_active: w.isActive,
+    schedule: w.schedule ?? "",
+    schedule_enabled: w.scheduleEnabled,
+    last_run_at: w.lastRunAt,
   };
 }
 

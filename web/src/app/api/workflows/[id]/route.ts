@@ -36,6 +36,8 @@ async function update(req: NextRequest, params: Params["params"]) {
       ...(body.nodes !== undefined ? { nodes: body.nodes } : {}),
       ...(body.edges !== undefined ? { edges: body.edges } : {}),
       ...(body.is_active !== undefined ? { isActive: body.is_active } : {}),
+      ...(body.schedule !== undefined ? { schedule: body.schedule || null } : {}),
+      ...(body.schedule_enabled !== undefined ? { scheduleEnabled: body.schedule_enabled } : {}),
     },
   });
   return NextResponse.json(serializeWorkflow(wf));

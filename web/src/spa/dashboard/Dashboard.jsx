@@ -9,6 +9,7 @@ import { useTheme } from '../theme.jsx';
 import apiService from '../services/api';
 import { workflowTemplates } from '../templates';
 import { web3SiteTemplates } from '../components/ui-builder/web3SiteTemplates';
+import { dappBundles } from '../dapps';
 import './Dashboard.css';
 
 const CRON_PRESETS = [
@@ -111,6 +112,35 @@ export default function Dashboard() {
     navigateToBuilder('page-builder');
   };
 
+  const [busyDapp, setBusyDapp] = useState(null);
+  const useDapp = async (bundle) => {
+    setBusyDapp(bundle.name);
+    try {
+      // 1) Create the paired workflow so it has an ID.
+      const created = await apiService.createWorkflow({
+        name: bundle.workflow.name,
+        description: `Workflow for the "${bundle.name}" dApp`,
+        nodes: bundle.workflow.nodes,
+        edges: bundle.workflow.edges,
+      });
+      // 2) Wire that workflow ID into the UI's action buttons.
+      const wiredHtml = bundle.site.html.split('__WF__').join(created.id);
+      // 3) Save the page and open the live, runnable dApp in a new tab.
+      const page = await apiService.createUIProject({
+        project_name: bundle.name,
+        components: { html: wiredHtml },
+      });
+      window.open(`/p/${page.id}`, '_blank');
+      // 4) Also load it into the Page Builder for editing.
+      localStorage.setItem('pendingSiteTemplate', JSON.stringify({ name: bundle.name, html: wiredHtml }));
+      loadWorkflows();
+    } catch (e) {
+      alert('Failed to set up dApp: ' + e.message);
+    } finally {
+      setBusyDapp(null);
+    }
+  };
+
   const deleteWorkflow = async (wf) => {
     if (!confirm(`Delete "${wf.name}"?`)) return;
     try {
@@ -199,9 +229,28 @@ export default function Dashboard() {
           <section>
             <div className="dash-section-head">
               <div>
-                <h2>dApp Templates</h2>
-                <p>Prebuilt Web3 workflows and websites — click to open in the builder.</p>
+                <h2>dApps</h2>
+                <p>One-click Web3 apps — a ready UI wired to a live workflow. Open one, hit the button, it runs.</p>
               </div>
+            </div>
+
+            <h3 className="dash-group">⚡ Ready dApps (UI + Workflow)</h3>
+            <div className="tpl-grid2">
+              {dappBundles.map((b, i) => (
+                <button
+                  className="tpl-card2 dapp-card"
+                  key={i}
+                  disabled={busyDapp === b.name}
+                  onClick={() => useDapp(b)}
+                >
+                  <div className="tpl-card2-top"><span className="tpl-emoji">{b.icon}</span><span className="tpl-tag">{b.category}</span></div>
+                  <div className="tpl-card2-name">{b.name}</div>
+                  <div className="tpl-card2-desc">{b.description}</div>
+                  <div className="tpl-card2-foot">
+                    {busyDapp === b.name ? 'Setting up…' : <>Launch dApp <FiArrowRight /></>}
+                  </div>
+                </button>
+              ))}
             </div>
 
             <h3 className="dash-group">⚙️ Workflow Templates</h3>

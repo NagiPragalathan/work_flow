@@ -25,7 +25,9 @@ export class TriggerNodeExecutor extends BaseNodeExecutor {
     const user = (td.user as string) ?? "anonymous";
     const timestamp = (td.timestamp as string) ?? "";
     this.logExecution(`Chat trigger activated from channel: ${channel}`);
-    return { main: { message, user, channel, timestamp, text: message } };
+    // Spread any extra trigger_data (e.g. UI input fields) so downstream
+    // nodes can read typed values like `address`, `amount`, etc.
+    return { main: { ...td, message, user, channel, timestamp, text: message } };
   }
 
   private webhook(context: ExecContext): NodeResult {
@@ -59,6 +61,8 @@ export class TriggerNodeExecutor extends BaseNodeExecutor {
       (td.text as string) ||
       "Manual execution started";
     this.logExecution(`Manual trigger message: '${message}'`);
-    return { main: { triggered_manually: true, message, text: message } };
+    // Spread trigger_data (UI input fields) so downstream nodes can read
+    // typed values like `address`, `amount`, `to`, etc.
+    return { main: { ...td, triggered_manually: true, message, text: message } };
   }
 }

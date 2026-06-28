@@ -11,6 +11,9 @@ export async function POST(req: NextRequest) {
     const message: string = body.message ?? "";
     const user: string = body.user ?? "anonymous";
     const channel: string = body.channel ?? "";
+    // Extra form/input fields collected from the page UI.
+    const inputs: Record<string, unknown> =
+      body.inputs && typeof body.inputs === "object" ? body.inputs : {};
 
     if (!workflowId) {
       return NextResponse.json({ error: "workflow_id is required" }, { status: 400 });
@@ -20,19 +23,12 @@ export async function POST(req: NextRequest) {
     if (!wf) return NextResponse.json({ detail: "Not found." }, { status: 404 });
 
     const nodes = wf.nodes as unknown as WorkflowNode[];
-    const hasChatTrigger = nodes.some((n) => n.data?.type === "when-chat-received");
-    if (!hasChatTrigger) {
-      return NextResponse.json(
-        { error: "Workflow does not have a chat trigger" },
-        { status: 400 }
-      );
-    }
 
     const { executionId, context } = await runWorkflow({
       workflowId: wf.id,
       nodes,
       edges: wf.edges as unknown as WorkflowEdge[],
-      triggerData: { message, user, channel, timestamp: "" },
+      triggerData: { message, user, channel, timestamp: "", ...inputs },
       credentials: {},
       userId: wf.userId,
     });

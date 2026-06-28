@@ -311,7 +311,8 @@ export class Web3NodeExecutor extends BaseNodeExecutor {
 
   private async tokenBalance(inputs: NodeInputs): Promise<NodeResult> {
     const { chain, rpc } = this.chainAndRpc(inputs);
-    const token = this.getProperty<string>("token", "");
+    const token =
+      this.getProperty<string>("token", "") || (asObject(inputs.main).token as string);
     const address =
       this.getProperty<string>("address", "") ||
       (asObject(inputs.main).address as string) ||

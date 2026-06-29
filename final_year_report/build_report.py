@@ -195,6 +195,7 @@ def code_block(code):
     p.paragraph_format.left_indent = Inches(0.2)
     p.paragraph_format.space_after = Pt(8); p.paragraph_format.space_before = Pt(4)
     p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+    p.paragraph_format.keep_together = True  # don't split a code block across pages
     for line in code.split("\n"):
         r = p.add_run(line + "\n"); r.font.name = "Consolas"; r.font.size = Pt(9)
         r.font.color.rgb = RGBColor(0x1a, 0x1a, 0x1a)
@@ -550,12 +551,9 @@ def _fit_width(path, max_w=10.2, max_h=6.1):
     return round(min(max_w, max_h * r), 2)
 
 def fig(num):
-    """Place a figure on its own full-page landscape sheet for maximum print readability."""
+    """Embed a figure inline in the portrait flow at full text width (uniform page size)."""
     f, bm = FIGMAP[num]
-    path = os.path.join(FIG, f)
-    s1 = doc.add_section(WD_SECTION.NEW_PAGE); _set_section(s1, True)
-    figure(f, num, FIGTITLE[num], width=_fit_width(path), bookmark=bm)
-    s2 = doc.add_section(WD_SECTION.NEW_PAGE); _set_section(s2, False)
+    figure(f, num, FIGTITLE[num], width=USABLE, bookmark=bm)
 TBLTITLE = {n:t for n,t,_ in TABLES}
 TBLBM = {n:b for n,t,b in TABLES}
 def tbl_cap(num):
@@ -972,7 +970,8 @@ make_table(["Method","Endpoint","Description"], [
 ], col_widths=[1.1, 2.5, 2.4], font=10)
 tbl_cap("4.1")
 H2("4.6 DATABASE SCHEMAS")
-para("The data model is defined as Prisma models mapped to PostgreSQL tables. The principal models are shown below.")
+para("The data model is defined as Prisma models mapped to PostgreSQL tables. The Workflow and "
+ "WorkflowExecution models store the graph and each run, as shown below.")
 code_block(
 "model Workflow {\n"
 "  id              String   @id @default(uuid())\n"
@@ -1000,8 +999,10 @@ code_block(
 "  nodeStates     Json     // per-node status, input, output, timing\n"
 "  errors         Json?\n"
 "  triggerData    Json?\n"
-"}\n"
-"\n"
+"}")
+para("The UIBuilderProject model stores each interface page together with its workflow binding, and "
+ "the Credential model stores per-user provider keys.")
+code_block(
 "model UIBuilderProject {\n"
 "  id          String   @id @default(uuid())\n"
 "  userId      String\n"
